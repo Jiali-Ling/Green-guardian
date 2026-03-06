@@ -25,7 +25,6 @@ a:hover {
 html {
   width: 100%;
   min-height: 100%;
-  /* 防止横向滚动 */
   overflow-x: hidden;
 }
 
@@ -33,7 +32,6 @@ body {
   width: 100%;
   min-height: 100%;
   margin: 0;
-  /* 防止横向滚动 */
   overflow-x: hidden;
 }
 
@@ -84,29 +82,22 @@ button:focus-visible {
 
 .hiddenFile{ display:none; }
 
-/* 移动端优化 */
 * {
-  /* 防止文本溢出 */
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-/* 移动端触摸优化 */
 body {
-  /* 防止点击高亮 */
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-  /* 防止文本选择（可选） */
   -webkit-touch-callout: none;
 }
 
-/* 确保图片响应式 */
 img {
   max-width: 100%;
   height: auto;
   display: block;
 }
 
-/* 确保输入框在 iOS 上不会自动缩放 */
 input,
 textarea,
 select {
@@ -114,21 +105,18 @@ select {
   max-width: 100%;
 }
 
-/* 视口单位支持移动端浏览器 */
 @supports (height: 100dvh) {
   html, body {
     min-height: 100dvh;
   }
 }
 
-/* 横屏模式优化 */
 @media (orientation: landscape) and (max-height: 500px) {
   body {
     overflow-y: auto;
   }
 }
 
-/* 优化移动端滚动 */
 #root {
   width: 100%;
   min-height: 100vh;

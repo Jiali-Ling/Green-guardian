@@ -4,7 +4,6 @@ import { MapPin, Locate, Plus } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// 修复 Leaflet 默认图标问题
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -22,7 +21,6 @@ const createEmojiIcon = () => {
   });
 };
 
-// 当前位置图标
 const createUserLocationIcon = () => {
   return L.divIcon({
     html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#81b29a" stroke="#81b29a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>`,
@@ -32,7 +30,6 @@ const createUserLocationIcon = () => {
   });
 };
 
-// 定位到用户当前位置组件
 function LocateUser({ userLocation, onLocationFound }) {
   const map = useMap();
 
@@ -50,12 +47,12 @@ function LocateUser({ userLocation, onLocationFound }) {
           onLocationFound({ lat: latitude, lng: longitude, accuracy });
         },
         (err) => {
-          alert(`无法获取位置: ${err.message}`);
+          alert(`Unable to get location: ${err.message}`);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
-      alert("您的浏览器不支持定位功能");
+      alert("Your browser does not support geolocation");
     }
   };
 
@@ -76,7 +73,7 @@ function LocateUser({ userLocation, onLocationFound }) {
             alignItems: 'center',
             justifyContent: 'center'
           }}
-          title="刷新当前位置"
+          title="Refresh current location"
         >
           <Locate size={18} />
         </button>
@@ -85,7 +82,6 @@ function LocateUser({ userLocation, onLocationFound }) {
   );
 }
 
-// 自动调整地图视图到所有标记点
 function AutoFitBounds({ cards }) {
   const map = useMap();
 
@@ -100,7 +96,6 @@ function AutoFitBounds({ cards }) {
   return null;
 }
 
-// 处理地图点击事件
 function MapClickHandler({ onMapClick }) {
   const [clickedPosition, setClickedPosition] = useState(null);
   
@@ -117,7 +112,7 @@ function MapClickHandler({ onMapClick }) {
     >
       <div style={{ textAlign: "center", padding: "8px" }}>
         <p style={{ margin: "0 0 12px 0", fontWeight: "bold" }}>
-          <MapPin size={18} className="inline-block mr-2" /> 在此添加故事？
+          <MapPin size={18} className="inline-block mr-2" /> Add story here?
         </p>
         <button
           style={{
@@ -135,7 +130,7 @@ function MapClickHandler({ onMapClick }) {
             setClickedPosition(null);
           }}
         >
-          + 创建新故事
+          + Create New Story
         </button>
       </div>
     </Popup>
@@ -144,7 +139,7 @@ function MapClickHandler({ onMapClick }) {
 
 export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation }) {
   const [userLocation, setUserLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState([40.7128, -74.006]); // 默认纽约
+  const [mapCenter, setMapCenter] = useState([40.7128, -74.006]);
   const [isLocating, setIsLocating] = useState(true);
   
   const cardsWithLocation = useMemo(
@@ -152,7 +147,6 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
     [cards]
   );
 
-  // 组件加载时自动获取用户位置
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -164,8 +158,7 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
           setIsLocating(false);
         },
         (err) => {
-          console.log("自动定位失败:", err.message);
-          // 如果有卡片，使用第一个卡片的位置
+          console.log("Auto-location failed:", err.message);
           if (cardsWithLocation.length > 0) {
             const firstCard = cardsWithLocation[0].location;
             setMapCenter([firstCard.lat, firstCard.lng]);
@@ -176,13 +169,12 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
       );
     } else {
       setIsLocating(false);
-      // 如果有卡片，使用第一个卡片的位置
       if (cardsWithLocation.length > 0) {
         const firstCard = cardsWithLocation[0].location;
         setMapCenter([firstCard.lat, firstCard.lng]);
       }
     }
-  }, []); // 只在组件挂载时执行一次
+  }, []);
 
   return (
     <div className="mapView">
@@ -199,7 +191,7 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
           border: '2px solid #2d2a24',
           fontWeight: 'bold'
         }}>
-          <Locate size={18} className="inline-block mr-2" /> 正在定位...
+          <Locate size={18} className="inline-block mr-2" /> Locating...
         </div>
       )}
       <div className="mapContainerWrapper">
@@ -259,7 +251,7 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
                     }}
                     onClick={() => onSelect(card.id)}
                   >
-                    查看详情
+                    View Details
                   </button>
                 </div>
               </Popup>
@@ -273,9 +265,9 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
             >
               <Popup>
                 <div style={{ textAlign: "center" }}>
-                  <Locate size={18} className="inline-block mr-2" /> <strong>您当前位置</strong>
+                  <Locate size={18} className="inline-block mr-2" /> <strong>Your Current Location</strong>
                   <br />
-                  <small>精度: ±{Math.round(userLocation.accuracy)}m</small>
+                  <small>Accuracy: ±{Math.round(userLocation.accuracy)}m</small>
                 </div>
               </Popup>
             </Marker>

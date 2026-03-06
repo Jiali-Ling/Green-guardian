@@ -8,12 +8,12 @@ export default function CardModal({ card, onClose }) {
       try {
         await navigator.share({
           title: card.title,
-          text: `我在 EchoMap Pins 给你留下了一个地点故事：${card.title}\n"${card.story}"`,
+          text: `I left you a location story on Green Guardian: ${card.title}\n"${card.story}"`,
           url: window.location.href,
         });
       } catch (err) { console.log("Share failed", err); }
     } else {
-      alert("当前浏览器不支持原生分享，请复制链接。");
+      alert("Your browser does not support native sharing. Please copy the link.");
     }
   };
 
@@ -46,7 +46,7 @@ export default function CardModal({ card, onClose }) {
 
           {card.audio && (
             <div className="modal__section">
-              <h3><Mic size={18} className="inline-block mr-2" /> 语音评价</h3>
+              <h3><Mic size={18} className="inline-block mr-2" /> Audio Note</h3>
               <audio 
                 controls 
                 src={card.audio} 
@@ -57,7 +57,7 @@ export default function CardModal({ card, onClose }) {
                 }} 
               />
               <p className="hint" style={{ marginTop: "8px" }}>
-                点击播放按钮收听语音
+                Click play to listen
               </p>
             </div>
           )}
@@ -82,7 +82,7 @@ export default function CardModal({ card, onClose }) {
                   textAlign: 'center'
                 }}
               >
-                <ExternalLink size={18} className="inline-block mr-2" /> 在 Google Maps 中查看
+                <ExternalLink size={18} className="inline-block mr-2" /> View on Google Maps
               </a>
             </div>
           )}
