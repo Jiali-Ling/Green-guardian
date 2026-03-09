@@ -137,44 +137,54 @@ function MapClickHandler({ onMapClick }) {
   ) : null;
 }
 
-export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation }) {
-  const [userLocation, setUserLocation] = useState(null);
-  const [mapCenter, setMapCenter] = useState([40.7128, -74.006]);
+export default function MapView({ observations = [], userLocation, onObservationClick }) {
+  const [mapCenter, setMapCenter] = useState([32.0603, 118.7969]);
   const [isLocating, setIsLocating] = useState(true);
+  const [localUserLocation, setLocalUserLocation] = useState(userLocation);
   
-  const cardsWithLocation = useMemo(
-    () => cards.filter((c) => c.location),
-    [cards]
+  const observationsWithLocation = useMemo(
+    () => observations.filter((obs) => obs.location),
+    [observations]
   );
 
   useEffect(() => {
-    if ("geolocation" in navigator) {
+    const locationTimeout = setTimeout(() => {
+      setIsLocating(false);
+    }, 5000);
+
+    if (userLocation) {
+      clearTimeout(locationTimeout);
+      setLocalUserLocation(userLocation);
+      setMapCenter([userLocation.lat, userLocation.lng]);
+      setIsLocating(false);
+    } else if (observationsWithLocation.length > 0) {
+      clearTimeout(locationTimeout);
+      const firstObs = observationsWithLocation[0].location;
+      setMapCenter([firstObs.lat, firstObs.lng]);
+      setIsLocating(false);
+    } else if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          clearTimeout(locationTimeout);
           const { latitude, longitude, accuracy } = pos.coords;
           const userPos = { lat: latitude, lng: longitude, accuracy };
-          setUserLocation(userPos);
+          setLocalUserLocation(userPos);
           setMapCenter([latitude, longitude]);
           setIsLocating(false);
         },
         (err) => {
-          console.log("Auto-location failed:", err.message);
-          if (cardsWithLocation.length > 0) {
-            const firstCard = cardsWithLocation[0].location;
-            setMapCenter([firstCard.lat, firstCard.lng]);
-          }
+          clearTimeout(locationTimeout);
           setIsLocating(false);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        { enableHighAccuracy: false, timeout: 3000, maximumAge: 60000 }
       );
     } else {
+      clearTimeout(locationTimeout);
       setIsLocating(false);
-      if (cardsWithLocation.length > 0) {
-        const firstCard = cardsWithLocation[0].location;
-        setMapCenter([firstCard.lat, firstCard.lng]);
-      }
     }
-  }, []);
+
+    return () => clearTimeout(locationTimeout);
+  }, [userLocation, observationsWithLocation]);
 
   return (
     <div className="mapView">
@@ -206,27 +216,27 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {cardsWithLocation.map((card) => (
+          {observationsWithLocation.map((obs) => (
             <Marker
-              key={card.id}
-              position={[card.location.lat, card.location.lng]}
+              key={obs.id}
+              position={[obs.location.lat, obs.location.lng]}
               icon={createEmojiIcon()}
               eventHandlers={{
-                click: () => onSelect(card.id),
+                click: () => onObservationClick && onObservationClick(obs),
               }}
             >
               <Popup>
                 <div style={{ maxWidth: "200px" }}>
-                  <h3 style={{ margin: "0 0 8px 0", fontSize: "16px" }}>{card.title}</h3>
-                  <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#666" }}>
-                    {card.story.length > 100
-                      ? card.story.slice(0, 100) + "…"
-                      : card.story}
-                  </p>
-                  {card.photo && (
+                  <h3 style={{ margin: "0 0 8px 0", fontSize: "16px" }}>{obs.species || "Unknown Species"}</h3>
+                  {obs.confidence > 0 && (
+                    <p style={{ margin: "0 0 8px 0", fontSize: "12px", color: "#666" }}>
+                      Confidence: {obs.confidence}%
+                    </p>
+                  )}
+                  {obs.photo && (
                     <img
-                      src={card.photo}
-                      alt={card.title}
+                      src={obs.photo}
+                      alt={obs.species}
                       style={{
                         width: "100%",
                         borderRadius: "8px",
@@ -234,22 +244,22 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
                       }}
                     />
                   )}
-                  {card.audio && (
-                    <div style={{ marginBottom: "8px" }}>
-                      <audio controls src={card.audio} style={{ width: "100%", height: "32px" }} />
-                    </div>
-                  )}
+                  <p style={{ margin: "0", fontSize: "11px", color: "#999" }}>
+                    {obs.username || "Anonymous"} • {new Date(obs.createdAt).toLocaleDateString()}
+                  </p>
                   <button
                     style={{
                       width: "100%",
+                      marginTop: "8px",
                       padding: "8px",
-                      background: "#81b29a",
-                      border: "2px solid #2d2a24",
+                      background: "var(--primary)",
+                      color: "white",
+                      border: "none",
                       borderRadius: "8px",
                       cursor: "pointer",
                       fontWeight: "bold",
                     }}
-                    onClick={() => onSelect(card.id)}
+                    onClick={() => onObservationClick && onObservationClick(obs)}
                   >
                     View Details
                   </button>
@@ -258,35 +268,25 @@ export default function MapView({ cards, onSelect, onCreate, onCreateAtLocation 
             </Marker>
           ))}
 
-          {userLocation && (
+          {localUserLocation && (
             <Marker
-              position={[userLocation.lat, userLocation.lng]}
+              position={[localUserLocation.lat, localUserLocation.lng]}
               icon={createUserLocationIcon()}
             >
               <Popup>
                 <div style={{ textAlign: "center" }}>
-                  <Locate size={18} className="inline-block mr-2" /> <strong>Your Current Location</strong>
-                  <br />
-                  <small>Accuracy: ±{Math.round(userLocation.accuracy)}m</small>
+                  <p style={{ margin: "0 0 8px 0", fontWeight: "bold" }}>You are here</p>
+                  <p style={{ margin: "0", fontSize: "12px", color: "#666" }}>
+                    Accuracy: ±{Math.round(localUserLocation.accuracy || 0)}m
+                  </p>
                 </div>
               </Popup>
             </Marker>
           )}
 
-          <LocateUser userLocation={userLocation} onLocationFound={setUserLocation} />
-          <AutoFitBounds cards={cardsWithLocation} />
-          {onCreateAtLocation && <MapClickHandler onMapClick={onCreateAtLocation} />}
+          {observationsWithLocation.length > 0 && <AutoFitBounds cards={observationsWithLocation} />}
+          <LocateUser userLocation={localUserLocation} onLocationFound={setLocalUserLocation} />
         </MapContainer>
-      </div>
-
-      <div className="mapFooter">
-        <button className="btn btn--primary" onClick={onCreate}>
-          + New Card
-        </button>
-        <p className="hint">
-          {cardsWithLocation.length} card{cardsWithLocation.length !== 1 ? "s" : ""} with
-          location
-        </p>
       </div>
     </div>
   );

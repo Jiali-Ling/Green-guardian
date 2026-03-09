@@ -11,7 +11,7 @@ export default function CardModal({ card, onClose }) {
           text: `I left you a location story on Green Guardian: ${card.title}\n"${card.story}"`,
           url: window.location.href,
         });
-      } catch (err) { console.log("Share failed", err); }
+      } catch (err) {}
     } else {
       alert("Your browser does not support native sharing. Please copy the link.");
     }

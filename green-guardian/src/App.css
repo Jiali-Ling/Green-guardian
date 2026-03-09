@@ -1,35 +1,48 @@
 :root {
-  --bg: #f4ebd0;
-  --bg-soft: #e7d9b5;
-  --panel: #f9f2dd;
-  --line: #bda57a;
-  --line-strong: #8e744a;
-  --text: #2d2418;
-  --muted: #6f5f47;
-  --accent: #5c4a2f;
-  --accent-2: #7a6d3f;
-  --danger: #c3423f;
-  --ok: #4f7a54;
-  --radius: 16px;
-  --shadow: 0 16px 30px rgba(78, 62, 36, 0.18);
-  --font-ui: "Trebuchet MS", "Segoe UI", "Verdana", sans-serif;
-  --font-display: "Avenir Next Rounded", "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+  --bg: #f5f9f3;
+  --bg-soft: #e8f2e3;
+  --bg-dark: #d4e8d0;
+  --panel: #ffffff;
+  --line: #c8dcc3;
+  --line-strong: #7fb800;
+  --text: #1a3a1a;
+  --text-muted: #5a7a5a;
+  --muted: #7a9a7a;
+  --accent: #7fb800;
+  --accent-2: #a3d977;
+  --danger: #d84a3f;
+  --ok: #7fb800;
+  --primary: #2d5016;
+  --primary-light: #5d8a4a;
+  --secondary: #3d6b2a;
+  --secondary-light: #5d8a4a;
+  --radius: 20px;
+  --radius-small: 12px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-large: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-serif: "Georgia", "Times New Roman", serif;
 }
 
 :root[data-theme="dark"] {
-  --bg: #111111;
-  --bg-soft: #1b1b1b;
-  --panel: #171717;
-  --line: #515151;
-  --line-strong: #d2d2d2;
-  --text: #f1eee8;
-  --muted: #c2bdb3;
-  --accent: #e6ded0;
-  --accent-2: #cccccc;
-  --danger: #d35a57;
-  --ok: #84b68a;
-  --shadow: 0 16px 30px rgba(0, 0, 0, 0.45);
+  --bg: #0d1a0d;
+  --bg-soft: #1a2e1a;
+  --panel: #1e3a1e;
+  --line: #3d5a3d;
+  --line-strong: #7fb800;
+  --text: #e8f2e3;
+  --muted: #a3c9a3;
+  --accent: #7fb800;
+  --accent-2: #a3d977;
+  --danger: #e76157;
+  --ok: #5d9d4d;
+  --primary: #3d6b2a;
+  --primary-light: #5d8a4a;
+  --secondary: #7fb800;
+  --secondary-light: #9dd033;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-large: 0 16px 48px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -128,7 +141,8 @@ p {
 .app-shell {
   width: min(1460px, 100% - 28px);
   margin: 14px auto 28px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
 

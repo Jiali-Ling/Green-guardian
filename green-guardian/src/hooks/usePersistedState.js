@@ -6,7 +6,6 @@ export default function usePersistedState(key, defaultValue) {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : defaultValue;
     } catch (e) {
-      console.error("Failed to read localStorage:", e);
       return defaultValue;
     }
   });
@@ -14,9 +13,7 @@ export default function usePersistedState(key, defaultValue) {
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(state));
-    } catch (e) {
-      console.error("Failed to write localStorage:", e);
-    }
+    } catch (e) {}
   }, [key, state]);
 
   return [state, setState];
