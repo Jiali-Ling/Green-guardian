@@ -87,12 +87,12 @@ export default function HomePage({ onNavigate }) {
   ];
 
   const galleryItems = [
-    { src: "/images/wildlife/eagle.jpg", species: "Bald Eagle", location: "Pacific Northwest, USA", className: "gallery-item-large", objectPos: "center 25%" },
-    { src: "/images/wildlife/fox.jpg", species: "Red Fox", location: "New York, USA", className: "", objectPos: "center center" },
-    { src: "/images/wildlife/Butterfly.jpg", species: "Monarch Butterfly", location: "Mexico City, Mexico", className: "", objectPos: "center center" },
-    { src: "/images/wildlife/Goliath_heron_standing_cropped.jpg", species: "Goliath Heron", location: "Kenya, Africa", className: "", objectPos: "center top" },
-    { src: "/images/wildlife/Hausziege_04.jpg", species: "Mountain Goat", location: "Rocky Mountains, USA", className: "", objectPos: "center center" },
-    { src: "/images/wildlife/Cedit%20Jack%20Ashton.jpg", species: "Humpback Whale", location: "Hawaii, USA", className: "", objectPos: "center center" }
+    { src: "/images/wildlife/eagle.jpg", species: "Bald Eagle", location: "Pacific Northwest, USA" },
+    { src: "/images/wildlife/fox.jpg", species: "Red Fox", location: "New York, USA" },
+    { src: "/images/wildlife/Butterfly.jpg", species: "Monarch Butterfly", location: "Mexico City, Mexico" },
+    { src: "/images/wildlife/Goliath_heron_standing_cropped.jpg", species: "Goliath Heron", location: "Kenya, Africa" },
+    { src: "/images/wildlife/Hausziege_04.jpg", species: "Mountain Goat", location: "Rocky Mountains, USA" },
+    { src: "/images/wildlife/Cedit%20Jack%20Ashton.jpg", species: "Humpback Whale", location: "Hawaii, USA" }
   ];
 
   return (
@@ -214,14 +214,14 @@ export default function HomePage({ onNavigate }) {
           {galleryItems.map((item, i) => (
             <div
               key={i}
-              className={`gallery-item ${item.className}`}
+              className="gallery-item"
               onClick={() => onNavigate('feed')}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && onNavigate('feed')}
               aria-label={`View ${item.species} observation`}
             >
-              <img src={item.src} alt={item.species} loading="lazy" style={{ objectPosition: item.objectPos }} />
+              <img src={item.src} alt={item.species} loading="lazy" />
               <div className="gallery-label">
                 <span className="gallery-species">{item.species}</span>
                 <span className="gallery-location">

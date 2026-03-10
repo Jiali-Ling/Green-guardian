@@ -1,129 +1,42 @@
+// React imports
 import { useState, useEffect } from "react";
+
+// Third-party libraries
 import { Moon, Sun, WifiOff } from "lucide-react";
-import usePersistedState from "./hooks/usePersistedState";
-import BottomNav from "./components/BottomNav";
-import HomePage from "./components/HomePage";
-import SpeciesScanner from "./components/SpeciesScanner";
-import CommunityFeed from "./components/CommunityFeed";
-import MapViewModern from "./components/MapViewModern";
-import UserProfile from "./components/UserProfile";
-import SpeciesDetailModal from "./components/SpeciesDetailModal";
-import BottomSheetModal from "./components/BottomSheetModal";
-import NavigationPanel from "./components/NavigationPanel";
-import CommentSection from "./components/CommentSection";
-import "./App.css";
-import "./styles/BottomNav.css";
-import "./styles/HomePage.css";
-import "./styles/SpeciesScanner.css";
-import "./styles/CommunityFeed.css";
-import "./styles/SpeciesDetailModal.css";
-import "./styles/BottomSheetModal.css";
-import "./styles/NavigationPanel.css";
-import "./styles/ARCameraView.css";
-import "./styles/UserProfile.css";
-import "./styles/CommentSection.css";
-import "./styles/MapView.css";
 import "leaflet/dist/leaflet.css";
 
-function createId() {
-  if (crypto?.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
+// Hooks
+import usePersistedState from "./hooks/usePersistedState";
 
-const sampleObservations = [
-  {
-    id: "sample-1",
-    species: "Monarch Butterfly",
-    confidence: 96,
-    photo: "/images/wildlife/Butterfly.jpg",
-    description: "Migration season! Hundreds of monarchs passing through",
-    location: { lat: 19.4326, lng: -99.1332 },
-    userId: "system",
-    username: "ForestGuardian",
-    userAvatar: null,
-    likes: 203,
-    comments: [],
-    createdAt: Date.now() - 86400000 * 3,
-    updatedAt: Date.now() - 86400000 * 3,
-  },
-  {
-    id: "sample-2",
-    species: "Humpback Whale",
-    confidence: 91,
-    photo: "/images/wildlife/Cedit%20Jack%20Ashton.jpg",
-    description: "Breaching whale spotted during boat tour!",
-    location: { lat: 21.3099, lng: -157.8581 },
-    userId: "system",
-    username: "OceanObserver",
-    userAvatar: null,
-    likes: 276,
-    comments: [],
-    createdAt: Date.now() - 86400000 * 4,
-    updatedAt: Date.now() - 86400000 * 4,
-  },
-  {
-    id: "sample-3",
-    species: "Great Blue Heron",
-    confidence: 87,
-    photo: "/images/wildlife/Goliath_heron_standing_cropped.jpg",
-    description: "Patient hunter waiting by the pond",
-    location: { lat: 34.0522, lng: -118.2437 },
-    userId: "system",
-    username: "BirdWatcher101",
-    userAvatar: null,
-    likes: 67,
-    comments: [],
-    createdAt: Date.now() - 86400000 * 5,
-    updatedAt: Date.now() - 86400000 * 5,
-  },
-  {
-    id: "sample-4",
-    species: "Mountain Goat",
-    confidence: 93,
-    photo: "/images/wildlife/Hausziege_04.jpg",
-    description: "Sure-footed climber on the rocky cliff",
-    location: { lat: 46.8721, lng: -113.9940 },
-    userId: "system",
-    username: "MountainHiker",
-    userAvatar: null,
-    likes: 184,
-    comments: [],
-    createdAt: Date.now() - 86400000 * 6,
-    updatedAt: Date.now() - 86400000 * 6,
-  },
-  {
-    id: "sample-5",
-    species: "Red Fox",
-    confidence: 89,
-    photo: "/images/wildlife/fox.jpg",
-    description: "Spotted near the forest edge at dawn",
-    location: { lat: 40.7128, lng: -74.0060 },
-    userId: "system",
-    username: "WildlifeWatcher",
-    userAvatar: null,
-    likes: 142,
-    comments: [],
-    createdAt: Date.now() - 86400000 * 7,
-    updatedAt: Date.now() - 86400000 * 7,
-  },
-  {
-    id: "sample-6",
-    species: "Bald Eagle",
-    confidence: 95,
-    photo: "/images/wildlife/eagle.jpg",
-    description: "Majestic raptor perched on ancient pine",
-    location: { lat: 47.6062, lng: -122.3321 },
-    userId: "system",
-    username: "SkyWatcher",
-    userAvatar: null,
-    likes: 312,
-    comments: [],
-    createdAt: Date.now() - 86400000 * 8,
-    updatedAt: Date.now() - 86400000 * 8,
-  },
-];
+// Utils & Data
+import { createId } from "./utils/helpers";
+import { sampleObservations, defaultUser } from "./data/sampleObservations";
+
+// Components
+import BottomNav from "./components/BottomNav";
+import BottomSheetModal from "./components/BottomSheetModal";
+import CommentSection from "./components/CommentSection";
+import CommunityFeed from "./components/CommunityFeed";
+import HomePage from "./components/HomePage";
+import MapViewModern from "./components/MapViewModern";
+import NavigationPanel from "./components/NavigationPanel";
+import SpeciesDetailModal from "./components/SpeciesDetailModal";
+import SpeciesScanner from "./components/SpeciesScanner";
+import UserProfile from "./components/UserProfile";
+
+// Styles
+import "./App.css";
+import "./styles/ARCameraView.css";
+import "./styles/BottomNav.css";
+import "./styles/BottomSheetModal.css";
+import "./styles/CommentSection.css";
+import "./styles/CommunityFeed.css";
+import "./styles/HomePage.css";
+import "./styles/MapView.css";
+import "./styles/NavigationPanel.css";
+import "./styles/SpeciesDetailModal.css";
+import "./styles/SpeciesScanner.css";
+import "./styles/UserProfile.css";
 
 export default function App() {
   const [currentView, setCurrentView] = useState("home");
@@ -134,10 +47,8 @@ export default function App() {
     sampleObservations
   );
   const [user, setUser] = usePersistedState("green_guardian_user", {
+    ...defaultUser,
     id: createId(),
-    username: "Wildlife Observer",
-    bio: "Exploring and documenting wildlife around the world",
-    avatar: null,
   });
   const [selectedObservation, setSelectedObservation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
