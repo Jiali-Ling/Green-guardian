@@ -95,6 +95,9 @@ export default function App() {
       userAvatar: user.avatar,
       likes: 0,
       comments: [],
+      isFavorited: false,
+      isVerified: false,
+      isPublic: true,
       createdAt: now,
       updatedAt: now,
     };
@@ -220,6 +223,30 @@ export default function App() {
     }
   };
 
+  const handleToggleFavorite = (observationId) => {
+    setObservations((prev) =>
+      prev.map((obs) =>
+        obs.id === observationId ? { ...obs, isFavorited: !obs.isFavorited } : obs
+      )
+    );
+  };
+
+  const handleToggleVerified = (observationId) => {
+    setObservations((prev) =>
+      prev.map((obs) =>
+        obs.id === observationId ? { ...obs, isVerified: !obs.isVerified } : obs
+      )
+    );
+  };
+
+  const handleTogglePublic = (observationId) => {
+    setObservations((prev) =>
+      prev.map((obs) =>
+        obs.id === observationId ? { ...obs, isPublic: !obs.isPublic } : obs
+      )
+    );
+  };
+
   return (
     <div className="app-container">
       {!isOnline && (
@@ -239,6 +266,9 @@ export default function App() {
             currentUserId={user.id}
             onSelectObservation={handleObservationClick}
             onDeleteObservation={handleDeleteObservation}
+            onToggleFavorite={handleToggleFavorite}
+            onToggleVerified={handleToggleVerified}
+            onTogglePublic={handleTogglePublic}
           />
         )}
 
@@ -289,6 +319,10 @@ export default function App() {
         <BottomSheetModal
           observation={selectedObservation}
           onClose={handleCloseDetail}
+          currentUserId={user.id}
+          onToggleFavorite={handleToggleFavorite}
+          onToggleVerified={handleToggleVerified}
+          onTogglePublic={handleTogglePublic}
           onNavigate={(obs) => {
             setNavigationTarget(obs);
             setSelectedObservation(null);
@@ -308,6 +342,10 @@ export default function App() {
         <SpeciesDetailModal
           observation={selectedObservation}
           onClose={handleCloseDetail}
+          currentUserId={user.id}
+          onToggleFavorite={handleToggleFavorite}
+          onToggleVerified={handleToggleVerified}
+          onTogglePublic={handleTogglePublic}
         >
           <CommentSection
             observationId={selectedObservation.id}

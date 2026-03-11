@@ -496,3 +496,36 @@
 [data-theme="dark"] .bottom-sheet-image::after {
   background: linear-gradient(to top, rgba(20, 40, 20, 0.9), transparent);
 }
+
+.bottom-sheet-toggles {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(127, 184, 0, 0.04);
+  border-radius: var(--radius-small);
+  margin: 12px 0;
+}
+
+.bottom-sheet-toggles .toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.bottom-sheet-toggles .toggle-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.bottom-sheet-toggles .toggle-label span {
+  font-weight: 500;
+}
+
+[data-theme="dark"] .bottom-sheet-toggles {
+  background: rgba(127, 184, 0, 0.08);
+}

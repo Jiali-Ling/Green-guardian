@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { X, MapPin, ChevronDown, ChevronUp, Navigation } from "lucide-react";
 import "../styles/BottomSheetModal.css";
 
-export default function BottomSheetModal({ observation, onClose, onNavigate, children }) {
+export default function BottomSheetModal({ observation, onClose, onNavigate, currentUserId, onToggleFavorite, onToggleVerified, onTogglePublic, children }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [startY, setStartY] = useState(0);
   const [currentY, setCurrentY] = useState(0);
+
+  const isOwner = observation?.userId === currentUserId;
 
   useEffect(() => {
     if (observation) {
@@ -147,6 +149,35 @@ export default function BottomSheetModal({ observation, onClose, onNavigate, chi
               <span>Observed on {new Date(observation.createdAt).toLocaleString()}</span>
             </div>
           )}
+
+          <div className="bottom-sheet-toggles">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={observation.isFavorited || false}
+                onChange={() => onToggleFavorite(observation.id)}
+              />
+              <span>Favorite</span>
+            </label>
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={observation.isVerified || false}
+                onChange={() => onToggleVerified(observation.id)}
+              />
+              <span>Verified</span>
+            </label>
+            {isOwner && (
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={observation.isPublic !== false}
+                  onChange={() => onTogglePublic(observation.id)}
+                />
+                <span>Public</span>
+              </label>
+            )}
+          </div>
 
           {children && isExpanded && (
             <div className="bottom-sheet-extra">

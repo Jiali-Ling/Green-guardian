@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Heart, MessageCircle, MapPin, Award, Filter, Search, Trash2, Leaf } from "lucide-react";
 import "../styles/CommunityFeed.css";
 
-export default function CommunityFeed({ observations, onSelectObservation, currentUserId, onDeleteObservation }) {
+export default function CommunityFeed({ observations, onSelectObservation, currentUserId, onDeleteObservation, onToggleFavorite, onToggleVerified, onTogglePublic }) {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -72,6 +72,10 @@ export default function CommunityFeed({ observations, onSelectObservation, curre
               observation={obs}
               onClick={() => onSelectObservation(obs)}
               onDelete={obs.userId === currentUserId ? () => onDeleteObservation(obs.id) : null}
+              onToggleFavorite={onToggleFavorite}
+              onToggleVerified={onToggleVerified}
+              onTogglePublic={onTogglePublic}
+              currentUserId={currentUserId}
             />
           ))
         )}
@@ -80,11 +84,12 @@ export default function CommunityFeed({ observations, onSelectObservation, curre
   );
 }
 
-function ObservationCard({ observation, onClick, onDelete }) {
+function ObservationCard({ observation, onClick, onDelete, onToggleFavorite, onToggleVerified, onTogglePublic, currentUserId }) {
   const [liked, setLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const likeCount = observation.likes || 0;
   const commentCount = observation.comments?.length || 0;
+  const isOwner = observation.userId === currentUserId;
 
   const handleLike = (e) => {
     e.stopPropagation();
@@ -100,6 +105,21 @@ function ObservationCard({ observation, onClick, onDelete }) {
 
   const handleImageError = () => {
     setImageError(true);
+  };
+
+  const handleToggleFavorite = (e) => {
+    e.stopPropagation();
+    onToggleFavorite(observation.id);
+  };
+
+  const handleToggleVerified = (e) => {
+    e.stopPropagation();
+    onToggleVerified(observation.id);
+  };
+
+  const handleTogglePublic = (e) => {
+    e.stopPropagation();
+    onTogglePublic(observation.id);
   };
 
   const getTimeAgo = (timestamp) => {
@@ -189,6 +209,35 @@ function ObservationCard({ observation, onClick, onDelete }) {
           <span className="card-time">
             {getTimeAgo(observation.createdAt)}
           </span>
+        </div>
+
+        <div className="card-toggles">
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={observation.isFavorited || false}
+              onChange={handleToggleFavorite}
+            />
+            <span>Favorite</span>
+          </label>
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={observation.isVerified || false}
+              onChange={handleToggleVerified}
+            />
+            <span>Verified</span>
+          </label>
+          {isOwner && (
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={observation.isPublic !== false}
+                onChange={handleTogglePublic}
+              />
+              <span>Public</span>
+            </label>
+          )}
         </div>
       </div>
     </div>

@@ -1,8 +1,10 @@
 import { X, MapPin, Info, Share2, BookmarkPlus, Camera } from "lucide-react";
 import "../styles/SpeciesDetailModal.css";
 
-export default function SpeciesDetailModal({ observation, onClose, onViewSimilar }) {
+export default function SpeciesDetailModal({ observation, onClose, onViewSimilar, currentUserId, onToggleFavorite, onToggleVerified, onTogglePublic, children }) {
   if (!observation) return null;
+
+  const isOwner = observation.userId === currentUserId;
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -102,6 +104,37 @@ export default function SpeciesDetailModal({ observation, onClose, onViewSimilar
               Observed on {new Date(observation.createdAt || Date.now()).toLocaleString()}
             </p>
           </div>
+
+          <div className="modal-toggles">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={observation.isFavorited || false}
+                onChange={() => onToggleFavorite(observation.id)}
+              />
+              <span>Favorite</span>
+            </label>
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={observation.isVerified || false}
+                onChange={() => onToggleVerified(observation.id)}
+              />
+              <span>Verified</span>
+            </label>
+            {isOwner && (
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={observation.isPublic !== false}
+                  onChange={() => onTogglePublic(observation.id)}
+                />
+                <span>Public</span>
+              </label>
+            )}
+          </div>
+
+          {children}
 
           {onViewSimilar && (
             <button className="btn btn--primary btn-full" onClick={onViewSimilar}>
