@@ -121,8 +121,8 @@ export default function App() {
 
   const handleComment = (observationId, commentText, parentId = null) => {
     setObservations((prev) =>
-      prev.map((obs) => {
-        if (obs.id === observationId) {
+      prev.map((observation) => {
+        if (observation.id === observationId) {
           const newComment = {
             id: nanoid(),
             userId: user.id,
@@ -134,37 +134,37 @@ export default function App() {
             createdAt: Date.now(),
           };
           return {
-            ...obs,
-            comments: [...(obs.comments || []), newComment],
+            ...observation,
+            comments: [...(observation.comments || []), newComment],
           };
         }
-        return obs;
+        return observation;
       })
     );
   };
 
   const handleCommentLike = (observationId, commentId) => {
     setObservations((prev) =>
-      prev.map((obs) => {
-        if (obs.id === observationId) {
+      prev.map((observation) => {
+        if (observation.id === observationId) {
           return {
-            ...obs,
-            comments: obs.comments.map((comment) =>
+            ...observation,
+            comments: observation.comments.map((comment) =>
               comment.id === commentId
                 ? { ...comment, likes: comment.likes + 1 }
                 : comment
             ),
           };
         }
-        return obs;
+        return observation;
       })
     );
   };
 
   const handleCommentDelete = (observationId, commentId) => {
     setObservations((prev) =>
-      prev.map((obs) => {
-        if (obs.id === observationId) {
+      prev.map((observation) => {
+        if (observation.id === observationId) {
           const filterComments = (comments) =>
             comments
               .filter((comment) => comment.id !== commentId)
@@ -176,11 +176,11 @@ export default function App() {
               });
 
           return {
-            ...obs,
-            comments: filterComments(obs.comments || []),
+            ...observation,
+            comments: filterComments(observation.comments || []),
           };
         }
-        return obs;
+        return observation;
       })
     );
   };
@@ -225,24 +225,24 @@ export default function App() {
 
   const handleToggleFavorite = (observationId) => {
     setObservations((prev) =>
-      prev.map((obs) =>
-        obs.id === observationId ? { ...obs, isFavorited: !obs.isFavorited } : obs
+      prev.map((observation) =>
+        observation.id === observationId ? { ...observation, isFavorited: !observation.isFavorited } : observation
       )
     );
   };
 
   const handleToggleVerified = (observationId) => {
     setObservations((prev) =>
-      prev.map((obs) =>
-        obs.id === observationId ? { ...obs, isVerified: !obs.isVerified } : obs
+      prev.map((observation) =>
+        observation.id === observationId ? { ...observation, isVerified: !observation.isVerified } : observation
       )
     );
   };
 
   const handleTogglePublic = (observationId) => {
     setObservations((prev) =>
-      prev.map((obs) =>
-        obs.id === observationId ? { ...obs, isPublic: !obs.isPublic } : obs
+      prev.map((observation) =>
+        observation.id === observationId ? { ...observation, isPublic: !observation.isPublic } : observation
       )
     );
   };
@@ -323,8 +323,8 @@ export default function App() {
           onToggleFavorite={handleToggleFavorite}
           onToggleVerified={handleToggleVerified}
           onTogglePublic={handleTogglePublic}
-          onNavigate={(obs) => {
-            setNavigationTarget(obs);
+          onNavigate={(observation) => {
+            setNavigationTarget(observation);
             setSelectedObservation(null);
           }}
         >
