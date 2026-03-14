@@ -3,7 +3,7 @@ import { Camera, RotateCcw, Check, X, Loader, AlertCircle } from "lucide-react";
 import useSpeciesRecognition from "../hooks/useSpeciesRecognition";
 import "../styles/SpeciesScanner.css";
 
-export default function SpeciesScanner({ onCapture, onCancel }) {
+export default function SpeciesScanner({ addObservation, geoFindMe, onCancel }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [stream, setStream] = useState(null);
@@ -92,19 +92,29 @@ export default function SpeciesScanner({ onCapture, onCancel }) {
     setIsAnalyzing(true);
     setError(null);
 
+    const captureAndLocate = async (payload) => {
+      if (typeof addObservation !== "function") {
+        throw new Error("Observation handler is unavailable");
+      }
+      const createdId = await Promise.resolve(addObservation(payload));
+      if (createdId && typeof geoFindMe === "function") {
+        geoFindMe(createdId);
+      }
+    };
+
     try {
       if (isReady) {
-        const img = document.createElement("img");
-        img.src = capturedImage;
-        
-        await new Promise((resolve) => {
-          img.onload = resolve;
+        const img = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error("Failed to prepare captured image"));
+          image.src = capturedImage;
         });
 
         const predictions = await classifyImage(img);
         
         if (predictions && predictions.length > 0) {
-          onCapture({
+          await captureAndLocate({
             photo: capturedImage,
             species: predictions[0].species,
             confidence: predictions[0].confidence,
@@ -114,7 +124,7 @@ export default function SpeciesScanner({ onCapture, onCancel }) {
         }
       }
       
-      onCapture({
+      await captureAndLocate({
         photo: capturedImage,
         species: "Unknown Species",
         confidence: 0,
@@ -122,7 +132,11 @@ export default function SpeciesScanner({ onCapture, onCancel }) {
       });
       
     } catch (err) {
-      onCapture({
+      if (typeof addObservation !== "function") {
+        setError("Unable to save observation. Please refresh and try again.");
+        return;
+      }
+      await captureAndLocate({
         photo: capturedImage,
         species: "Unknown Species",
         confidence: 0,

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { X, MapPin, ChevronDown, ChevronUp, Navigation } from "lucide-react";
 import "../styles/BottomSheetModal.css";
 
-export default function BottomSheetModal({ observation, onClose, onNavigate, currentUserId, onTogglePublic, children }) {
+export default function BottomSheetModal({ observation, latitude, longitude, onClose, onNavigate, currentUserId, onTogglePublic, children }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [startY, setStartY] = useState(0);
   const [currentY, setCurrentY] = useState(0);
@@ -102,15 +102,15 @@ export default function BottomSheetModal({ observation, onClose, onNavigate, cur
             </div>
           )}
 
-          {observation.location && (
+          {latitude != null && longitude != null && (
             <div className="bottom-sheet-section">
               <div className="bottom-sheet-location">
                 <MapPin size={16} />
                 <div>
                   <span className="location-coords">
-                    {observation.location.lat.toFixed(4)}, {observation.location.lng.toFixed(4)}
+                    {latitude.toFixed(4)}, {longitude.toFixed(4)}
                   </span>
-                  {observation.location.accuracy && (
+                  {observation.location?.accuracy && (
                     <span className="location-accuracy">
                       Accuracy: ±{Math.round(observation.location.accuracy)}m
                     </span>

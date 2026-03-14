@@ -3,17 +3,17 @@ import { Camera, Map, X } from "lucide-react";
 import ARCameraView from "./ARCameraView";
 import "../styles/NavigationPanel.css";
 
-export default function NavigationPanel({ observation, onClose }) {
+export default function NavigationPanel({ observation, latitude, longitude, onClose }) {
   const [mode, setMode] = useState("ar");
 
-  if (!observation || !observation.location) {
+  if (!observation || latitude == null || longitude == null) {
     return null;
   }
 
   if (mode === "ar") {
     return (
       <ARCameraView
-        targetLocation={observation.location}
+        targetLocation={{ lat: latitude, lng: longitude, accuracy: observation.location?.accuracy }}
         targetName={observation.species}
         onClose={onClose}
       />
@@ -51,7 +51,7 @@ export default function NavigationPanel({ observation, onClose }) {
           <Map size={64} />
           <p>Map directions view (integration with map component)</p>
           <p className="map-hint">
-            Location: {observation.location.lat.toFixed(4)}, {observation.location.lng.toFixed(4)}
+            Location: {latitude.toFixed(4)}, {longitude.toFixed(4)}
           </p>
         </div>
       </div>

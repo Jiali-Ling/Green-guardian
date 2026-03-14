@@ -365,7 +365,8 @@ export default function App({ initialObservations }) {
 
         {currentView === "scan" && (
           <SpeciesScanner
-            onCapture={addObservation}
+            addObservation={addObservation}
+            geoFindMe={geoFindMe}
             onCancel={() => setCurrentView("feed")}
           />
         )}
@@ -409,6 +410,8 @@ export default function App({ initialObservations }) {
       {selectedObservation && currentView === "map" ? (
         <BottomSheetModal
           observation={selectedObservation}
+          latitude={selectedObservation.location?.lat}
+          longitude={selectedObservation.location?.lng}
           onClose={closeMapObservationDetail}
           currentUserId={user.id}
           onTogglePublic={toggleObservationVisibility}
@@ -430,6 +433,8 @@ export default function App({ initialObservations }) {
       ) : selectedObservation ? (
         <SpeciesDetailModal
           observation={selectedObservation}
+          latitude={selectedObservation.location?.lat}
+          longitude={selectedObservation.location?.lng}
           onClose={closeObservationDetail}
           currentUserId={user.id}
           onTogglePublic={toggleObservationVisibility}
@@ -449,6 +454,8 @@ export default function App({ initialObservations }) {
       {navigationTarget && (
         <NavigationPanel
           observation={navigationTarget}
+          latitude={navigationTarget.location?.lat}
+          longitude={navigationTarget.location?.lng}
           onClose={() => setNavigationTarget(null)}
         />
       )}

@@ -1,7 +1,7 @@
 import { X, MapPin, Info, Share2, BookmarkPlus, Camera } from "lucide-react";
 import "../styles/SpeciesDetailModal.css";
 
-export default function SpeciesDetailModal({ observation, onClose, onViewSimilar, currentUserId, onTogglePublic, children }) {
+export default function SpeciesDetailModal({ observation, latitude, longitude, onClose, onViewSimilar, currentUserId, onTogglePublic, children }) {
   if (!observation) return null;
 
   const isOwner = observation.userId === currentUserId;
@@ -61,19 +61,19 @@ export default function SpeciesDetailModal({ observation, onClose, onViewSimilar
             </div>
           )}
 
-          {observation.location && (
+          {latitude != null && longitude != null && (
             <div className="info-section">
               <h3>
                 <MapPin size={18} />
                 Location
               </h3>
               <p className="location-text">
-                Lat: {observation.location.lat.toFixed(6)}, Lng: {observation.location.lng.toFixed(6)}
+                Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
                 <br />
-                <span className="accuracy">Accuracy: ±{Math.round(observation.location.accuracy)}m</span>
+                <span className="accuracy">Accuracy: ±{Math.round(observation.location?.accuracy)}m</span>
               </p>
               <a
-                href={`https://www.google.com/maps?q=${observation.location.lat},${observation.location.lng}`}
+                href={`https://www.google.com/maps?q=${latitude},${longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn--outline"

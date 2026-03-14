@@ -101,6 +101,8 @@ export default function CommunityFeed({ observations, onSelectObservation, curre
             <ObservationCard
               key={obs.id}
               observation={obs}
+              latitude={obs.location?.lat}
+              longitude={obs.location?.lng}
               onClick={() => onSelectObservation(obs)}
               onDelete={obs.userId === currentUserId ? () => onDeleteObservation(obs.id) : null}
               onTogglePublic={onTogglePublic}
@@ -113,7 +115,7 @@ export default function CommunityFeed({ observations, onSelectObservation, curre
   );
 }
 
-function ObservationCard({ observation, onClick, onDelete, onTogglePublic, currentUserId }) {
+function ObservationCard({ observation, latitude, longitude, onClick, onDelete, onTogglePublic, currentUserId }) {
   const [liked, setLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const likeCount = observation.likes || 0;
@@ -201,11 +203,11 @@ function ObservationCard({ observation, onClick, onDelete, onTogglePublic, curre
           </p>
         )}
 
-        {observation.location && (
+        {latitude != null && longitude != null && (
           <div className="card-location">
             <MapPin size={14} />
             <span>
-              {observation.location.lat.toFixed(4)}, {observation.location.lng.toFixed(4)}
+              &nbsp;| la {latitude.toFixed(4)}&nbsp;| lo {longitude.toFixed(4)}
             </span>
           </div>
         )}
