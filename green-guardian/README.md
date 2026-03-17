@@ -408,10 +408,10 @@ All Rights Reserved
 
 ## Developer
 
-Name: [Your Name]  
-Student ID: [Your ID]  
-Email: [Your Email]  
-GitHub: [Your GitHub Profile]
+Name: Jiali Ling 
+Student ID: B01812585@studentmail.uws.ac.uk  
+Email: B01812585@studentmail.uws.ac.uk 
+GitHub: https://github.com/Jiali-Ling/Green-guardian.git
 
 ---
 
