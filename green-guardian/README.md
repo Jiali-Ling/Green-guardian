@@ -2,7 +2,7 @@
 
 A progressive web application (PWA) for wildlife observation and environmental monitoring. Built with React 19, this app demonstrates modern web technologies including AI-powered species recognition, real-time GPS tracking, and offline-first architecture.
 
-Live Demo: [Add your deployment URL]  
+Live Demo: https://green-guardian-rose.vercel.app/
 Install as App: Supports "Add to Home Screen" on mobile devices
 
 ---
