@@ -167,6 +167,25 @@
   border-color: var(--line-strong);
 }
 
+.btn-icon-round--active {
+  background: rgba(127, 184, 0, 0.14);
+  border-color: rgba(127, 184, 0, 0.55);
+  color: var(--primary);
+}
+
+.save-notice {
+  margin: -12px 0 16px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(127, 184, 0, 0.12);
+  border: 1px solid rgba(127, 184, 0, 0.35);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .info-section {
   margin-bottom: 24px;
   padding-bottom: 24px;
@@ -370,6 +389,18 @@
 [data-theme="dark"] .btn-icon-round:hover {
   background: #2d5016;
   border-color: rgba(127, 184, 0, 0.4);
+}
+
+[data-theme="dark"] .btn-icon-round--active {
+  background: rgba(127, 184, 0, 0.24);
+  border-color: rgba(127, 184, 0, 0.55);
+  color: #e8f2e3;
+}
+
+[data-theme="dark"] .save-notice {
+  background: rgba(127, 184, 0, 0.22);
+  border-color: rgba(127, 184, 0, 0.42);
+  color: #e8f2e3;
 }
 
 [data-theme="dark"] .accuracy {

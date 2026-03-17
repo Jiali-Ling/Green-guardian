@@ -10,11 +10,11 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 ## Course Requirements Checklist
 
 ### Progressive Web App (PWA)
-- Service Worker: Offline-first caching with Workbox (dev-dist/sw.js)
-- Web App Manifest: Installable with custom icons (vite.config.js)
-- Offline Mode: All core features work without internet connection
-- Background Sync: Queues observations when offline, syncs when online
-- Cache Strategy: StaleWhileRevalidate for pages, CacheFirst for images
+- Service Worker: Custom `service-worker.js` in `public/`
+- Web App Manifest: Custom `manifest.json` in `public/` with app icons and standalone display
+- Service Worker Registration: Manually registered in `src/main.jsx`
+- Installability: Supports "Add to Home Screen" on compatible mobile browsers
+- Offline Support: Basic offline caching is configured for core static assets
 
 ### Device APIs Integration
 - Camera API: `navigator.mediaDevices.getUserMedia()` for wildlife photography
@@ -93,15 +93,24 @@ Scrolling landing page introducing app features with:
 - React-Leaflet 5.0.0: React wrapper for Leaflet
 
 ### PWA & Storage
-- vite-plugin-pwa 1.2.0: Service worker generation
-- idb 8.0.3: IndexedDB for large data storage
+- Web App Manifest: Custom `manifest.json`
+- Service Worker: Custom `service-worker.js`
 - LocalStorage API: Persistent state management
+- idb 8.0.3: IndexedDB support for larger client-side storage
 
 ### UI & Animation
 - Lucide React 0.468.0: Icon library (100+ icons)
 - Framer Motion 12.35.1: Animation library
 
 ---
+
+## PWA Setup
+
+- Custom `manifest.json` is stored in `public/`
+- Custom `service-worker.js` is stored in `public/`
+- Service worker is manually registered in `src/main.jsx`
+- The deployed app can be installed on supported mobile browsers using "Add to Home Screen"
+
 
 ## Installation & Usage
 
@@ -333,7 +342,7 @@ App.jsx (parent)
 ## Known Limitations
 
 1. AI Accuracy: MobileNet trained on ImageNet (general objects), not specialized wildlife database. Predictions may be generic.
-2. Offline AI: Model must download once before offline use possible.
+2. Offline Support: Core static assets and previously cached resources remain available offline
 3. HTTPS Required: Camera/GPS APIs require secure context.
 4. Browser Support: Safari < 15 may have limited functionality.
 5. Storage Limits: Browser may clear cache if storage runs low.

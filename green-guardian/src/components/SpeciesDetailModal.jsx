@@ -1,10 +1,31 @@
-import { X, MapPin, Info, Share2, BookmarkPlus, Camera } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, MapPin, Info, Share2, BookmarkPlus, Camera, Pencil, Check } from "lucide-react";
 import "../styles/SpeciesDetailModal.css";
 
-export default function SpeciesDetailModal({ observation, latitude, longitude, onClose, onViewSimilar, currentUserId, onTogglePublic, children }) {
+export default function SpeciesDetailModal({ observation, onClose, onEditObservation, latitude, longitude, onViewSimilar, currentUserId, onTogglePublic, children }) {
+  const [isSaved, setIsSaved] = useState(false);
+  const [saveNotice, setSaveNotice] = useState("");
+
   if (!observation) return null;
 
   const isOwner = observation.userId === currentUserId;
+  const savedObservationKey = "green_guardian_saved_observation_ids";
+
+  useEffect(() => {
+    try {
+      const savedRaw = localStorage.getItem(savedObservationKey);
+      const savedIds = savedRaw ? JSON.parse(savedRaw) : [];
+      setIsSaved(Array.isArray(savedIds) && savedIds.includes(observation.id));
+    } catch (e) {
+      setIsSaved(false);
+    }
+  }, [observation.id]);
+
+  useEffect(() => {
+    if (!saveNotice) return;
+    const timer = window.setTimeout(() => setSaveNotice(""), 1500);
+    return () => window.clearTimeout(timer);
+  }, [saveNotice]);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -15,6 +36,24 @@ export default function SpeciesDetailModal({ observation, latitude, longitude, o
           url: window.location.href,
         });
       } catch (err) {}
+    }
+  };
+
+  const handleToggleSave = () => {
+    try {
+      const savedRaw = localStorage.getItem(savedObservationKey);
+      const savedIds = savedRaw ? JSON.parse(savedRaw) : [];
+      const currentIds = Array.isArray(savedIds) ? savedIds : [];
+      const nextSaved = !currentIds.includes(observation.id);
+      const nextIds = nextSaved
+        ? [...currentIds, observation.id]
+        : currentIds.filter((id) => id !== observation.id);
+
+      localStorage.setItem(savedObservationKey, JSON.stringify(nextIds));
+      setIsSaved(nextSaved);
+      setSaveNotice(nextSaved ? "Saved to bookmarks" : "Removed from bookmarks");
+    } catch (e) {
+      setSaveNotice("Unable to update bookmarks");
     }
   };
 
@@ -40,16 +79,36 @@ export default function SpeciesDetailModal({ observation, latitude, longitude, o
               )}
             </div>
             <div className="action-buttons">
+              {isOwner && typeof onEditObservation === "function" && (
+                <button
+                  className="btn-icon-round"
+                  onClick={() => onEditObservation(observation)}
+                  aria-label="Edit"
+                  title="Edit this observation"
+                  type="button"
+                >
+                  <Pencil size={20} />
+                  <span className="btn-label">Edit</span>
+                </button>
+              )}
               <button className="btn-icon-round" onClick={handleShare} aria-label="Share" title="Share this observation">
                 <Share2 size={20} />
                 <span className="btn-label">Share</span>
               </button>
-              <button className="btn-icon-round" aria-label="Bookmark" title="Save to bookmarks">
-                <BookmarkPlus size={20} />
-                <span className="btn-label">Save</span>
+              <button
+                className={`btn-icon-round ${isSaved ? "btn-icon-round--active" : ""}`}
+                onClick={handleToggleSave}
+                aria-label={isSaved ? "Saved" : "Save"}
+                title={isSaved ? "Remove from bookmarks" : "Save to bookmarks"}
+                type="button"
+              >
+                {isSaved ? <Check size={20} /> : <BookmarkPlus size={20} />}
+                <span className="btn-label">{isSaved ? "Saved" : "Save"}</span>
               </button>
             </div>
           </div>
+
+          {saveNotice && <div className="save-notice" role="status">{saveNotice}</div>}
 
           {observation.description && (
             <div className="info-section">

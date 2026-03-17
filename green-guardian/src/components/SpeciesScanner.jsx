@@ -3,23 +3,40 @@ import { Camera, RotateCcw, Check, X, Loader, AlertCircle } from "lucide-react";
 import useSpeciesRecognition from "../hooks/useSpeciesRecognition";
 import "../styles/SpeciesScanner.css";
 
-export default function SpeciesScanner({ addObservation, geoFindMe, onCancel }) {
+export default function SpeciesScanner({ addObservation, onCapture, geoFindMe, onCancel }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
+  const [showSavedToast, setShowSavedToast] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+
+  const submitObservation = typeof addObservation === "function" ? addObservation : onCapture;
+
+  const dismissKeyboard = () => {
+    if (document.activeElement && typeof document.activeElement.blur === "function") {
+      document.activeElement.blur();
+    }
+    window.scrollTo(0, 0);
+  };
   
   const { classifyImage, isReady, isLoading, error: modelError } = useSpeciesRecognition();
 
   useEffect(() => {
+    dismissKeyboard();
     startCamera();
     return () => {
       stopCamera();
     };
   }, []);
+
+  useEffect(() => {
+    if (!showSavedToast) return;
+    const timer = window.setTimeout(() => setShowSavedToast(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [showSavedToast]);
 
   const startCamera = async () => {
     try {
@@ -67,6 +84,7 @@ export default function SpeciesScanner({ addObservation, geoFindMe, onCancel }) 
   };
 
   const capturePhoto = () => {
+    dismissKeyboard();
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -87,16 +105,18 @@ export default function SpeciesScanner({ addObservation, geoFindMe, onCancel }) 
   };
 
   const analyzeImage = async () => {
+    dismissKeyboard();
     if (!capturedImage) return;
 
     setIsAnalyzing(true);
     setError(null);
 
     const captureAndLocate = async (payload) => {
-      if (typeof addObservation !== "function") {
+      if (typeof submitObservation !== "function") {
         throw new Error("Observation handler is unavailable");
       }
-      const createdId = await Promise.resolve(addObservation(payload));
+      const createdId = await Promise.resolve(submitObservation(payload));
+      setShowSavedToast(true);
       if (createdId && typeof geoFindMe === "function") {
         geoFindMe(createdId);
       }
@@ -132,7 +152,7 @@ export default function SpeciesScanner({ addObservation, geoFindMe, onCancel }) 
       });
       
     } catch (err) {
-      if (typeof addObservation !== "function") {
+      if (typeof submitObservation !== "function") {
         setError("Unable to save observation. Please refresh and try again.");
         return;
       }
@@ -209,6 +229,13 @@ export default function SpeciesScanner({ addObservation, geoFindMe, onCancel }) 
           <div className="warning-toast">
             <AlertCircle size={16} />
             <span>{modelError}</span>
+          </div>
+        )}
+
+        {showSavedToast && (
+          <div className="success-toast" role="status" aria-live="polite">
+            <Check size={16} />
+            <span>Recognized and saved</span>
           </div>
         )}
       </div>

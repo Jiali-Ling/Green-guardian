@@ -321,16 +321,52 @@ export default function App({ initialObservations }) {
     setUser((prev) => ({ ...prev, avatar: avatarDataUrl }));
   };
 
-  const selectObservation = (observation) => {
-    setSelectedObservation(observation);
-  };
-
   const deleteObservation = (observationId) => {
     setObservations((prev) => prev.filter((obs) => obs.id !== observationId));
     if (selectedObservation?.id === observationId) {
       setSelectedObservation(null);
     }
   };
+
+const editObservation = (observationId, updates) => {
+  setObservations((prev) =>
+    prev.map((observation) =>
+      observation.id === observationId
+        ? {
+            ...observation,
+            ...updates,
+            updatedAt: Date.now(),
+          }
+        : observation
+    )
+  );
+
+  setSelectedObservation((prev) =>
+    prev?.id === observationId
+      ? {
+          ...prev,
+          ...updates,
+          updatedAt: Date.now(),
+        }
+      : prev
+  );
+};
+
+const handleEditObservation = (observation) => {
+  const newSpecies = prompt("Edit species name:", observation.species || "");
+  if (newSpecies === null) return;
+
+  const newDescription = prompt(
+    "Edit description:",
+    observation.description || observation.notes || ""
+  );
+  if (newDescription === null) return;
+
+  editObservation(observation.id, {
+    species: newSpecies.trim(),
+    description: newDescription.trim(),
+  });
+};
 
   const toggleObservationVisibility = (observationId) => {
     setObservations((prev) =>
@@ -393,19 +429,23 @@ export default function App({ initialObservations }) {
         )}
       </div>
 
-      <BottomNav
-        currentView={currentView}
-        onNavigate={setCurrentView}
-        isDark={isDark}
-        onToggleDark={() => setIsDark(d => !d)}
-      />
-      <button
-        className="mobile-dark-toggle"
-        onClick={() => setIsDark(d => !d)}
-        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {isDark ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
+      {currentView !== "scan" && (
+        <BottomNav
+          currentView={currentView}
+          onNavigate={setCurrentView}
+          isDark={isDark}
+          onToggleDark={() => setIsDark(d => !d)}
+        />
+      )}
+      {currentView !== "scan" && (
+        <button
+          className="mobile-dark-toggle"
+          onClick={() => setIsDark(d => !d)}
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {isDark ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      )}
 
       {selectedObservation && currentView === "map" ? (
         <BottomSheetModal
@@ -436,6 +476,7 @@ export default function App({ initialObservations }) {
           latitude={selectedObservation.location?.lat}
           longitude={selectedObservation.location?.lng}
           onClose={closeObservationDetail}
+          onEditObservation={handleEditObservation}
           currentUserId={user.id}
           onTogglePublic={toggleObservationVisibility}
         >

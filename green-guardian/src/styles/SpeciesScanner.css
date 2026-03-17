@@ -1,6 +1,10 @@
 .species-scanner {
   position: fixed;
   inset: 0;
+  width: 100%;
+  min-height: 100svh;
+  height: 100vh;
+  height: 100dvh;
   background: var(--bg);
   z-index: 2000;
   display: flex;
@@ -215,6 +219,25 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.success-toast {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(34, 116, 34, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+  pointer-events: none;
+}
+
 .scanner-controls {
   display: flex;
   align-items: center;
@@ -309,8 +332,27 @@
 }
 
 @media (max-width: 768px) {
+  .species-scanner {
+    min-height: 100dvh;
+  }
+
+  .scanner-viewport {
+    min-height: 0;
+  }
+
   .scanner-controls {
-    padding-bottom: max(32px, calc(env(safe-area-inset-bottom) + 20px));
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+    padding-bottom: max(82px, calc(env(safe-area-inset-bottom) + 54px));
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) {
+    .scanner-controls {
+      padding-bottom: max(98px, calc(env(safe-area-inset-bottom) + 68px));
+    }
   }
 }
 
