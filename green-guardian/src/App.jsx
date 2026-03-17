@@ -321,6 +321,15 @@ export default function App({ initialObservations }) {
     setUser((prev) => ({ ...prev, avatar: avatarDataUrl }));
   };
 
+  const selectObservation = (observation) => {
+    setSelectedObservation(observation);
+  };
+
+  const handleScannerSaved = () => {
+    setSelectedObservation(null);
+    setCurrentView("feed");
+  };
+
   const deleteObservation = (observationId) => {
     setObservations((prev) => prev.filter((obs) => obs.id !== observationId));
     if (selectedObservation?.id === observationId) {
@@ -403,6 +412,7 @@ const handleEditObservation = (observation) => {
           <SpeciesScanner
             addObservation={addObservation}
             geoFindMe={geoFindMe}
+            onSaved={handleScannerSaved}
             onCancel={() => setCurrentView("feed")}
           />
         )}

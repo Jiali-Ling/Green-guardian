@@ -3,7 +3,7 @@ import { Camera, RotateCcw, Check, X, Loader, AlertCircle } from "lucide-react";
 import useSpeciesRecognition from "../hooks/useSpeciesRecognition";
 import "../styles/SpeciesScanner.css";
 
-export default function SpeciesScanner({ addObservation, onCapture, geoFindMe, onCancel }) {
+export default function SpeciesScanner({ addObservation, onCapture, geoFindMe, onCancel, onSaved }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [stream, setStream] = useState(null);
@@ -29,6 +29,26 @@ export default function SpeciesScanner({ addObservation, onCapture, geoFindMe, o
     startCamera();
     return () => {
       stopCamera();
+    };
+  }, []);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const updateViewportOffset = () => {
+      const offset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      document.documentElement.style.setProperty("--scanner-vv-offset", `${offset}px`);
+    };
+
+    updateViewportOffset();
+    viewport.addEventListener("resize", updateViewportOffset);
+    viewport.addEventListener("scroll", updateViewportOffset);
+
+    return () => {
+      viewport.removeEventListener("resize", updateViewportOffset);
+      viewport.removeEventListener("scroll", updateViewportOffset);
+      document.documentElement.style.setProperty("--scanner-vv-offset", "0px");
     };
   }, []);
 
@@ -119,6 +139,9 @@ export default function SpeciesScanner({ addObservation, onCapture, geoFindMe, o
       setShowSavedToast(true);
       if (createdId && typeof geoFindMe === "function") {
         geoFindMe(createdId);
+      }
+      if (typeof onSaved === "function") {
+        window.setTimeout(() => onSaved(createdId), 350);
       }
     };
 
