@@ -419,7 +419,6 @@ export default function App({ initialObservations }) {
   };
 
   const handleScannerSaved = () => {
-    setSelectedObservation(null);
     setCurrentView("feed");
   };
 

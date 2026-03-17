@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
-import { X, MapPin, Info, Share2, BookmarkPlus, Camera, Pencil, Check } from "lucide-react";
+import Popup from "reactjs-popup";
+import "reactjs-popup/dist/index.css";
+import { X, MapPin, Info, Share2, BookmarkPlus, Camera, Pencil, Check, Image } from "lucide-react";
+import { GetPhotoSrc } from "../db";
 import "../styles/SpeciesDetailModal.css";
 
 export default function SpeciesDetailModal({ observation, onClose, onEditObservation, latitude, longitude, onViewSimilar, currentUserId, onTogglePublic, children }) {
   const [isSaved, setIsSaved] = useState(false);
   const [saveNotice, setSaveNotice] = useState("");
 
-  if (!observation) return null;
-
-  const isOwner = observation.userId === currentUserId;
+  const photoFromDb = GetPhotoSrc(observation?.id);
   const savedObservationKey = "green_guardian_saved_observation_ids";
 
   useEffect(() => {
+    if (!observation?.id) {
+      setIsSaved(false);
+      return;
+    }
+
     try {
       const savedRaw = localStorage.getItem(savedObservationKey);
       const savedIds = savedRaw ? JSON.parse(savedRaw) : [];
@@ -19,7 +25,7 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
     } catch (e) {
       setIsSaved(false);
     }
-  }, [observation.id]);
+  }, [observation?.id]);
 
   useEffect(() => {
     if (!saveNotice) return;
@@ -57,16 +63,29 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
     }
   };
 
-  return (
+  if (!observation) return null;
+
+  const isOwner = observation.userId === currentUserId;
+  const renderPhotoSrc = photoFromDb || observation.photo || null;
+  const mapHref =
+    latitude != null && longitude != null
+      ? `https://www.google.com/maps?q=${latitude},${longitude}`
+      : null;
+  const smsHref =
+    latitude != null && longitude != null
+      ? `sms:?&body=${encodeURIComponent(`Wildlife location: ${latitude}, ${longitude}`)}`
+      : null;
+
+  const viewTemplate = (
     <div className="modal-overlay" onClick={onClose}>
       <div className="species-modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label="Close">
           <X size={24} />
         </button>
 
-        {observation.photo && (
+        {renderPhotoSrc && (
           <div className="species-photo">
-            <img src={observation.photo} alt={observation.species} />
+            <img src={renderPhotoSrc} alt={observation.species} />
           </div>
         )}
 
@@ -105,6 +124,48 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
                 {isSaved ? <Check size={20} /> : <BookmarkPlus size={20} />}
                 <span className="btn-label">{isSaved ? "Saved" : "Save"}</span>
               </button>
+
+              <Popup
+                trigger={(
+                  <button
+                    className="btn-icon-round"
+                    aria-label="View Photo"
+                    title="View Photo"
+                    type="button"
+                  >
+                    <Image size={20} />
+                    <span className="btn-label">View Photo</span>
+                  </button>
+                )}
+                modal
+                nested
+                lockScroll
+                overlayStyle={{ zIndex: 4200, background: "rgba(0, 0, 0, 0.72)" }}
+                contentStyle={{
+                  zIndex: 4201,
+                  border: "none",
+                  background: "transparent",
+                  width: "min(92vw, 560px)",
+                  padding: 0,
+                }}
+              >
+                {(close) => (
+                  <div className="photo-popup">
+                    <div className="photo-popup-header">
+                      <h3>View Photo</h3>
+                      <button className="btn-icon-round" onClick={close} type="button">
+                        <X size={16} />
+                        <span className="btn-label">Close</span>
+                      </button>
+                    </div>
+                    {photoFromDb ? (
+                      <img className="photo-preview" src={photoFromDb} alt="Observation photo from IndexedDB" />
+                    ) : (
+                      <p className="photo-empty">No photo saved in IndexedDB for this observation yet.</p>
+                    )}
+                  </div>
+                )}
+              </Popup>
             </div>
           </div>
 
@@ -131,15 +192,31 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
                 <br />
                 <span className="accuracy">Accuracy: ±{Math.round(observation.location?.accuracy)}m</span>
               </p>
-              <a
-                href={`https://www.google.com/maps?q=${latitude},${longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn--outline"
-              >
-                <MapPin size={18} />
-                View on Map
-              </a>
+              <p className="location-inline">
+                <a href={mapHref} target="_blank" rel="noopener noreferrer">(map)</a>
+                &nbsp;|&nbsp; lo {longitude.toFixed(6)}
+                {smsHref && (
+                  <>
+                    &nbsp;|&nbsp;<a href={smsHref}>(sms)</a>
+                  </>
+                )}
+              </p>
+              <div className="location-actions">
+                <a
+                  href={mapHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn--outline"
+                >
+                  <MapPin size={18} />
+                  View on Map
+                </a>
+                {smsHref && (
+                  <a href={smsHref} className="btn btn--outline btn--sms">
+                    Share via SMS
+                  </a>
+                )}
+              </div>
             </div>
           )}
 
@@ -188,4 +265,6 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
       </div>
     </div>
   );
+
+  return viewTemplate;
 }

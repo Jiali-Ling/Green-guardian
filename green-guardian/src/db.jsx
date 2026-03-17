@@ -12,18 +12,28 @@ async function addPhoto(id, imgSrc) {
   if (!id || typeof imgSrc !== "string") {
     return null;
   }
-  await db.photos.put({ id, imgSrc });
-  return id;
+  try {
+    await db.photos.put({ id, imgSrc });
+    console.log(`Photo ${imgSrc.length} bytes successfully added. Got id ${id}`);
+    return id;
+  } catch (error) {
+    console.log(`Failed to add photo: ${error}`);
+    return null;
+  }
 }
 
 function GetPhotoSrc(id) {
-  const img = useLiveQuery(() => {
-    if (!id) return [];
-    return db.photos.where("id").equals(id).toArray();
-  }, [id]);
+  try {
+    const img = useLiveQuery(() => {
+      if (!id) return [];
+      return db.photos.where("id").equals(id).toArray();
+    }, [id]);
 
-  if (Array.isArray(img) && img.length > 0) {
-    return img[0].imgSrc;
+    if (Array.isArray(img) && img.length > 0) {
+      return img[0].imgSrc;
+    }
+  } catch (error) {
+    console.log(`Failed to get photo source: ${error}`);
   }
 
   return null;

@@ -18,6 +18,7 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 
 ### Device APIs Integration
 - Camera API: `navigator.mediaDevices.getUserMedia()` for wildlife photography
+- Webcam Capture: `react-webcam` for popup-based capture flow in observation detail
 - Geolocation API: `navigator.geolocation` for GPS coordinates with accuracy tracking
 - DeviceOrientation API: Compass and AR navigation features
 - LocalStorage: Fallback/compatibility persistence for key app state
@@ -109,6 +110,8 @@ Scrolling landing page introducing app features with:
 ### UI & Animation
 - Lucide React 0.468.0: Icon library (100+ icons)
 - Framer Motion 12.35.1: Animation library
+- reactjs-popup 2.x: Modal popups for take-photo/view-photo workflow
+- react-webcam 7.x: Camera preview and screenshot capture in popup
 
 ---
 
@@ -195,7 +198,7 @@ The app has 5 main tabs in the bottom navigation:
 5. Review species prediction and confidence score
 6. Add location notes or description
 7. Tap Identify Species (or Save Photo fallback) to save the observation
-8. After save, the app returns to Feed where the new record appears
+8. After save, the app returns to Feed and opens the saved observation detail so you can edit immediately
 
 ### Exploring the Map
 1. Tap the Map tab
@@ -213,7 +216,8 @@ The app has 5 main tabs in the bottom navigation:
 5. Like observations with heart button
 6. Add comments and reply to others
 7. Edit your own observations (species/description)
-8. Delete your own observations (trash icon)
+8. Open popup-based Take Photo / View Photo actions in observation detail
+9. Delete your own observations (trash icon)
 
 ---
 
@@ -341,10 +345,18 @@ The app has 5 main tabs in the bottom navigation:
 - Step 1 (Imports): `src/db.jsx` imports `dexie` and `dexie-react-hooks` (`useLiveQuery`)
 - Step 2 (Database instance): creates a Dexie database instance for the app
 - Step 3 (Table schema): includes a `photos` table with primary key `id` (image data is not indexed)
-- Step 4/5 (Async photo write): `addPhoto(id, imgSrc)` stores photo data (base64/data URL) keyed by observation id
+- Step 4/5 (Async photo write): `addPhoto(id, imgSrc)` uses `async` + `try/catch` to store photo data (base64/data URL) keyed by observation id and returns id/null
 - Photos synchronization: the app also rebuilds `photos` from current observation photo fields to keep IndexedDB data visible/consistent in DevTools
-- Step 6 (Live read hook): `GetPhotoSrc(id)` reads from `photos` using `useLiveQuery`
+- Step 6 (Live read hook): `GetPhotoSrc(id)` reads from `photos` using `useLiveQuery` and returns `img[0].imgSrc` when available
 - Step 7 (Exports): helper functions are exported together at the bottom of `src/db.jsx` (e.g., `export { addPhoto, GetPhotoSrc, ... }`)
+
+### UI Adaptation Alignment (Todo.jsx-style)
+- Observation detail component imports and uses: `Popup` (`reactjs-popup`), popup CSS, `Webcam` (`react-webcam`), and `{ addPhoto, GetPhotoSrc }` from `db.jsx`
+- Uses a `viewTemplate`-style JSX variable pattern before returning (structure aligned with tutorial style)
+- Uses `Popup trigger={...} modal` for both "Take Photo" and "View Photo" interactions
+- The modal includes map and SMS sharing links for location context
+- Take Photo popup writes to Dexie through `addPhoto`
+- View Photo popup reads from Dexie via `GetPhotoSrc`
 
 ### Styling Approach
 - Component-scoped CSS files
