@@ -3,6 +3,15 @@ import { Moon, Sun, WifiOff } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { nanoid } from "nanoid";
 import { sampleObservations, defaultUser } from "./data/sampleObservations";
+import {
+  addPhoto,
+  dbReady,
+  getAllObservationsFromDb,
+  getUserFromDb,
+  replaceAllObservationsInDb,
+  replaceAllPhotosInDb,
+  setUserInDb,
+} from "./db";
 import BottomNav from "./components/BottomNav";
 import BottomSheetModal from "./components/BottomSheetModal";
 import CommentSection from "./components/CommentSection";
@@ -44,6 +53,18 @@ function usePersistedState(key, defaultValue) {
   return [state, setState];
 }
 
+const OBSERVATIONS_STORAGE_KEY = "green_guardian_observations";
+const USER_STORAGE_KEY = "green_guardian_user";
+
+function readLocalStorageValue(key, fallbackValue) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallbackValue;
+  } catch (e) {
+    return fallbackValue;
+  }
+}
+
 const normalizeObservation = (observation) => ({
   ...observation,
   comments: Array.isArray(observation?.comments) ? observation.comments : [],
@@ -68,15 +89,22 @@ export default function App({ initialObservations }) {
   const [currentView, setCurrentView] = useState("home");
   const [isDark, setIsDark] = usePersistedState("gg_dark_mode", false);
   const [isOnline, setIsOnline] = useState(navigator.onLine ?? true);
-  
-  const [observations, setObservations] = usePersistedState(
-    "green_guardian_observations",
-    normalizeObservations(initialObservations ?? sampleObservations)
+
+  const [observations, setObservations] = useState(() =>
+    normalizeObservations(
+      readLocalStorageValue(
+        OBSERVATIONS_STORAGE_KEY,
+        initialObservations ?? sampleObservations
+      )
+    )
   );
-  const [user, setUser] = usePersistedState("green_guardian_user", {
-    ...defaultUser,
-    id: nanoid(),
-  });
+  const [user, setUser] = useState(() =>
+    readLocalStorageValue(USER_STORAGE_KEY, {
+      ...defaultUser,
+      id: nanoid(),
+    })
+  );
+  const [isDexieReady, setIsDexieReady] = useState(false);
   const [selectedObservation, setSelectedObservation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [navigationTarget, setNavigationTarget] = useState(null);
@@ -96,6 +124,69 @@ export default function App({ initialObservations }) {
       window.removeEventListener("offline", onOffline);
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const hydrateFromDexie = async () => {
+      try {
+        await dbReady;
+        const [dbObservations, dbUser] = await Promise.all([
+          getAllObservationsFromDb(),
+          getUserFromDb(),
+        ]);
+
+        if (cancelled) return;
+
+        if (Array.isArray(dbObservations) && dbObservations.length > 0) {
+          setObservations(normalizeObservations(dbObservations));
+        } else {
+          await replaceAllObservationsInDb(observations);
+        }
+
+        if (dbUser) {
+          setUser(dbUser);
+        } else {
+          await setUserInDb(user);
+        }
+      } catch (e) {
+        console.error("Dexie hydration failed, falling back to localStorage:", e);
+      } finally {
+        if (!cancelled) {
+          setIsDexieReady(true);
+        }
+      }
+    };
+
+    hydrateFromDexie();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(OBSERVATIONS_STORAGE_KEY, JSON.stringify(observations));
+    } catch (e) {}
+  }, [observations]);
+
+  useEffect(() => {
+    if (!isDexieReady) return;
+    replaceAllObservationsInDb(observations).catch(() => {});
+    replaceAllPhotosInDb(observations).catch(() => {});
+  }, [observations, isDexieReady]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    } catch (e) {}
+  }, [user]);
+
+  useEffect(() => {
+    if (!isDexieReady) return;
+    setUserInDb(user).catch(() => {});
+  }, [user, isDexieReady]);
 
   useEffect(() => {
     if (observations.length === 0) {
@@ -209,6 +300,8 @@ export default function App({ initialObservations }) {
     setSelectedObservation(newObservation);
     setLastInsertedId(newObservation.id);
     geoFindMe(newObservation.id);
+    addPhoto(newObservation.id, newObservation.photo).catch(() => {});
+    return newObservation.id;
   };
 
   const closeObservationDetail = () => {

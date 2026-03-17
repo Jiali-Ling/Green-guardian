@@ -20,8 +20,8 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 - Camera API: `navigator.mediaDevices.getUserMedia()` for wildlife photography
 - Geolocation API: `navigator.geolocation` for GPS coordinates with accuracy tracking
 - DeviceOrientation API: Compass and AR navigation features
-- LocalStorage: Persistent state management for observations
-- IndexedDB: Large photo storage with idb library
+- LocalStorage: Fallback/compatibility persistence for key app state
+- IndexedDB (Dexie): Structured local database for observations and user cache
 
 ### Modern Technologies
 - Framework: React 19.2.0 with Hooks and functional components
@@ -102,8 +102,9 @@ Scrolling landing page introducing app features with:
 ### PWA & Storage
 - Web App Manifest: Custom `manifest.json`
 - Service Worker: Custom `service-worker.js`
-- LocalStorage API: Persistent state management
-- idb 8.0.3: IndexedDB support for larger client-side storage
+- LocalStorage API: Compatibility fallback + UI preference persistence
+- Dexie 4.x + IndexedDB: Primary structured local persistence layer
+- dexie-react-hooks 4.x: Live query hook support for React components
 
 ### UI & Animation
 - Lucide React 0.468.0: Icon library (100+ icons)
@@ -161,6 +162,7 @@ green-guardian/
 │   │   └── helpers.js             # ID generation, formatters
 │   ├── data/                  # Data files
 │   │   └── sampleObservations.js  # Sample wildlife data
+│   ├── db.jsx                 # Dexie schema + addPhoto/GetPhotoSrc helpers
 │   ├── App.jsx                # Main app logic & routing
 │   ├── App.css                # Global styles & variables
 │   └── main.jsx               # React DOM entry point
@@ -331,8 +333,18 @@ The app has 5 main tabs in the bottom navigation:
 
 ### State Management
 - React hooks (useState, useEffect, useMemo)
-- LocalStorage for persistent data
+- Dexie (IndexedDB) for structured persistent observation/user data
+- LocalStorage as compatibility fallback and preference storage
 - No Redux/external state library needed
+
+### Dexie Lab Week 07 Alignment (Step 1-7)
+- Step 1 (Imports): `src/db.jsx` imports `dexie` and `dexie-react-hooks` (`useLiveQuery`)
+- Step 2 (Database instance): creates a Dexie database instance for the app
+- Step 3 (Table schema): includes a `photos` table with primary key `id` (image data is not indexed)
+- Step 4/5 (Async photo write): `addPhoto(id, imgSrc)` stores photo data (base64/data URL) keyed by observation id
+- Photos synchronization: the app also rebuilds `photos` from current observation photo fields to keep IndexedDB data visible/consistent in DevTools
+- Step 6 (Live read hook): `GetPhotoSrc(id)` reads from `photos` using `useLiveQuery`
+- Step 7 (Exports): helper functions are exported together at the bottom of `src/db.jsx` (e.g., `export { addPhoto, GetPhotoSrc, ... }`)
 
 ### Styling Approach
 - Component-scoped CSS files
@@ -391,7 +403,7 @@ Purpose: Educational project demonstrating PWA development
 - Device API integration (Camera, GPS, Orientation)  
 - Modern JavaScript framework (React 19)  
 - Responsive mobile-first design  
-- Local data persistence (LocalStorage + IndexedDB)  
+- Local data persistence (Dexie/IndexedDB + LocalStorage fallback)  
 - Third-party library integration (TensorFlow.js, Leaflet)  
 - Clean code structure with components  
 - Professional UI/UX design
