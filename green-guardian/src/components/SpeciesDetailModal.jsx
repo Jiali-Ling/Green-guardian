@@ -5,6 +5,22 @@ import { X, MapPin, Info, Share2, BookmarkPlus, Camera, Pencil, Check, Image } f
 import { GetPhotoSrc } from "../db";
 import "../styles/SpeciesDetailModal.css";
 
+function ViewPhoto(props) {
+  const photoSrc = GetPhotoSrc(props.id);
+
+  return (
+    <>
+      {photoSrc ? (
+        <div>
+          <img className="photo-preview" src={photoSrc} alt={props.name} />
+        </div>
+      ) : (
+        <p className="photo-empty">No photo saved in IndexedDB for this observation yet.</p>
+      )}
+    </>
+  );
+}
+
 export default function SpeciesDetailModal({ observation, onClose, onEditObservation, latitude, longitude, onViewSimilar, currentUserId, onTogglePublic, children }) {
   const [isSaved, setIsSaved] = useState(false);
   const [saveNotice, setSaveNotice] = useState("");
@@ -12,19 +28,24 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
   const photoFromDb = GetPhotoSrc(observation?.id);
   const savedObservationKey = "green_guardian_saved_observation_ids";
 
+  function readSavedObservationIds() {
+    try {
+      const savedRaw = localStorage.getItem(savedObservationKey);
+      const savedIds = savedRaw ? JSON.parse(savedRaw) : [];
+      return Array.isArray(savedIds) ? savedIds : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   useEffect(() => {
     if (!observation?.id) {
       setIsSaved(false);
       return;
     }
 
-    try {
-      const savedRaw = localStorage.getItem(savedObservationKey);
-      const savedIds = savedRaw ? JSON.parse(savedRaw) : [];
-      setIsSaved(Array.isArray(savedIds) && savedIds.includes(observation.id));
-    } catch (e) {
-      setIsSaved(false);
-    }
+    const savedIds = readSavedObservationIds();
+    setIsSaved(savedIds.includes(observation.id));
   }, [observation?.id]);
 
   useEffect(() => {
@@ -33,7 +54,7 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
     return () => window.clearTimeout(timer);
   }, [saveNotice]);
 
-  const handleShare = async () => {
+  async function handleShare() {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -41,15 +62,15 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
           text: `I observed ${observation.species} on Green Guardian!`,
           url: window.location.href,
         });
-      } catch (err) {}
+      } catch (err) {
+        // Ignore cancelled share actions.
+      }
     }
-  };
+  }
 
-  const handleToggleSave = () => {
+  function handleToggleSave() {
     try {
-      const savedRaw = localStorage.getItem(savedObservationKey);
-      const savedIds = savedRaw ? JSON.parse(savedRaw) : [];
-      const currentIds = Array.isArray(savedIds) ? savedIds : [];
+      const currentIds = readSavedObservationIds();
       const nextSaved = !currentIds.includes(observation.id);
       const nextIds = nextSaved
         ? [...currentIds, observation.id]
@@ -61,18 +82,19 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
     } catch (e) {
       setSaveNotice("Unable to update bookmarks");
     }
-  };
+  }
 
   if (!observation) return null;
 
   const isOwner = observation.userId === currentUserId;
-  const renderPhotoSrc = photoFromDb || observation.photo || null;
+  const displayPhotoSrc = photoFromDb || observation.photo || null;
+  const hasCoordinates = latitude != null && longitude != null;
   const mapHref =
-    latitude != null && longitude != null
+    hasCoordinates
       ? `https://www.google.com/maps?q=${latitude},${longitude}`
       : null;
   const smsHref =
-    latitude != null && longitude != null
+    hasCoordinates
       ? `sms:?&body=${encodeURIComponent(`Wildlife location: ${latitude}, ${longitude}`)}`
       : null;
 
@@ -83,9 +105,9 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
           <X size={24} />
         </button>
 
-        {renderPhotoSrc && (
+        {displayPhotoSrc && (
           <div className="species-photo">
-            <img src={renderPhotoSrc} alt={observation.species} />
+            <img src={displayPhotoSrc} alt={observation.species} />
           </div>
         )}
 
@@ -158,11 +180,7 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
                         <span className="btn-label">Close</span>
                       </button>
                     </div>
-                    {photoFromDb ? (
-                      <img className="photo-preview" src={photoFromDb} alt="Observation photo from IndexedDB" />
-                    ) : (
-                      <p className="photo-empty">No photo saved in IndexedDB for this observation yet.</p>
-                    )}
+                    <ViewPhoto id={observation.id} name={observation.species} />
                   </div>
                 )}
               </Popup>
@@ -181,7 +199,7 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
             </div>
           )}
 
-          {latitude != null && longitude != null && (
+          {hasCoordinates && (
             <div className="info-section">
               <h3>
                 <MapPin size={18} />

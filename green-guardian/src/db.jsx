@@ -3,13 +3,21 @@ import { useLiveQuery } from "dexie-react-hooks";
 
 export const db = new Dexie("green_guardian_db");
 
+const OBSERVATIONS_SCHEMA = "id, createdAt, updatedAt, userId, isPublic";
+const KEY_VALUE_SCHEMA = "key";
+const PHOTOS_SCHEMA = "id";
+
+function isValidPhotoPayload(id, imgSrc) {
+  return Boolean(id) && typeof imgSrc === "string";
+}
+
 db.version(1).stores({
-  observations: "id, createdAt, updatedAt, userId, isPublic",
-  keyValue: "key",
+  observations: OBSERVATIONS_SCHEMA,
+  keyValue: KEY_VALUE_SCHEMA,
 });
 
 async function addPhoto(id, imgSrc) {
-  if (!id || typeof imgSrc !== "string") {
+  if (!isValidPhotoPayload(id, imgSrc)) {
     return null;
   }
   try {
@@ -24,13 +32,13 @@ async function addPhoto(id, imgSrc) {
 
 function GetPhotoSrc(id) {
   try {
-    const img = useLiveQuery(() => {
+    const rows = useLiveQuery(() => {
       if (!id) return [];
       return db.photos.where("id").equals(id).toArray();
     }, [id]);
 
-    if (Array.isArray(img) && img.length > 0) {
-      return img[0].imgSrc;
+    if (Array.isArray(rows) && rows.length > 0) {
+      return rows[0].imgSrc;
     }
   } catch (error) {
     console.log(`Failed to get photo source: ${error}`);
@@ -40,9 +48,9 @@ function GetPhotoSrc(id) {
 }
 
 db.version(2).stores({
-  observations: "id, createdAt, updatedAt, userId, isPublic",
-  keyValue: "key",
-  photos: "id",
+  observations: OBSERVATIONS_SCHEMA,
+  keyValue: KEY_VALUE_SCHEMA,
+  photos: PHOTOS_SCHEMA,
 });
 
 const dbReady = db.open().catch((error) => {
@@ -65,7 +73,7 @@ async function replaceAllObservationsInDb(observations) {
 }
 
 async function replaceAllPhotosInDb(observations) {
-  const photos = Array.isArray(observations)
+  const photoRows = Array.isArray(observations)
     ? observations
         .filter((observation) => observation?.id && typeof observation?.photo === "string")
         .map((observation) => ({ id: observation.id, imgSrc: observation.photo }))
@@ -73,8 +81,8 @@ async function replaceAllPhotosInDb(observations) {
 
   await db.transaction("rw", db.photos, async () => {
     await db.photos.clear();
-    if (photos.length > 0) {
-      await db.photos.bulkPut(photos);
+    if (photoRows.length > 0) {
+      await db.photos.bulkPut(photoRows);
     }
   });
 }

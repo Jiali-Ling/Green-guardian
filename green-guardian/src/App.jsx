@@ -65,25 +65,33 @@ function readLocalStorageValue(key, fallbackValue) {
   }
 }
 
-const normalizeObservation = (observation) => ({
-  ...observation,
-  comments: Array.isArray(observation?.comments) ? observation.comments : [],
-  isPublic: observation?.isPublic !== false,
-});
+function normalizeObservation(observation) {
+  return {
+    ...observation,
+    comments: Array.isArray(observation?.comments) ? observation.comments : [],
+    isPublic: observation?.isPublic !== false,
+    photoed:
+      typeof observation?.photoed === "boolean"
+        ? observation.photoed
+        : Boolean(observation?.photo),
+  };
+}
 
-const normalizeObservations = (observations) => {
+function normalizeObservations(observations) {
   if (!Array.isArray(observations)) {
     return sampleObservations.map(normalizeObservation);
   }
   return observations.map(normalizeObservation);
-};
+}
 
-const needsObservationNormalization = (observations) =>
-  Array.isArray(observations) && observations.some(
+function needsObservationNormalization(observations) {
+  return Array.isArray(observations) && observations.some(
     (observation) =>
       !Array.isArray(observation?.comments) ||
-      observation?.isPublic === undefined
+      observation?.isPublic === undefined ||
+      observation?.photoed === undefined
   );
+}
 
 export default function App({ initialObservations }) {
   const [currentView, setCurrentView] = useState("home");
@@ -109,6 +117,23 @@ export default function App({ initialObservations }) {
   const [userLocation, setUserLocation] = useState(null);
   const [navigationTarget, setNavigationTarget] = useState(null);
   const [lastInsertedId, setLastInsertedId] = useState(null);
+
+  // Shared state updaters keep observation mutations easy to scan.
+  function updateObservationById(observationId, updater) {
+    if (!observationId || typeof updater !== "function") return;
+    setObservations((prev) =>
+      prev.map((observation) =>
+        observation.id === observationId ? updater(observation) : observation
+      )
+    );
+  }
+
+  function updateSelectedObservationById(observationId, updater) {
+    if (!observationId || typeof updater !== "function") return;
+    setSelectedObservation((prev) =>
+      prev?.id === observationId ? updater(prev) : prev
+    );
+  }
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
@@ -199,52 +224,42 @@ export default function App({ initialObservations }) {
     }
   }, []);
 
-  const locateObservation = (observationId, coords) => {
+  function locateObservation(observationId, coords) {
     if (!observationId) return;
+    const now = Date.now();
 
-    setObservations((prevObservations) =>
-      prevObservations.map((obs) => {
-        if (obs.id === observationId) {
-          return {
-            ...obs,
-            location: coords,
-            updatedAt: Date.now(),
-          };
-        }
-        return obs;
-      })
-    );
+    updateObservationById(observationId, (observation) => ({
+      ...observation,
+      location: coords,
+      updatedAt: now,
+    }));
 
-    setSelectedObservation((prev) =>
-      prev?.id === observationId
-        ? {
-            ...prev,
-            location: coords,
-            updatedAt: Date.now(),
-          }
-        : prev
-    );
-  };
+    updateSelectedObservationById(observationId, (observation) => ({
+      ...observation,
+      location: coords,
+      updatedAt: now,
+    }));
+  }
 
-  const geoFindMe = (observationId = null) => {
+  function geoFindMe(observationId = null) {
     if (!navigator.geolocation) {
       console.log("Geolocation is not supported by your browser");
-      error();
+      handleGeolocationError();
     } else {
       console.log("Locating...");
       navigator.geolocation.getCurrentPosition(
-        (position) => success(position, observationId),
-        (err) => error(err),
+        (position) => handleGeolocationSuccess(position, observationId),
+        (err) => handleGeolocationError(err),
         {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 0,
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0,
         }
       );
     }
-  };
+  }
 
-  const success = (position, observationId = null) => {
+  function handleGeolocationSuccess(position, observationId = null) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
     console.log(`Latitude: ${latitude} ° , Longitude: ${longitude} °`);
@@ -270,17 +285,18 @@ export default function App({ initialObservations }) {
       locateObservation(targetId, coords);
       setLastInsertedId(null);
     }
-  };
+  }
 
-  const error = () => {
+  function handleGeolocationError() {
     console.log("Unable to retrieve your exact location");
-  };
+  }
 
   useEffect(() => {
     geoFindMe();
   }, []);
 
-  const addObservation = (speciesData) => {
+  // Observation CRUD
+  function addObservation(speciesData) {
     const now = Date.now();
     const newObservation = {
       id: nanoid(),
@@ -291,6 +307,7 @@ export default function App({ initialObservations }) {
       likes: 0,
       comments: [],
       isPublic: true,
+      photoed: Boolean(speciesData?.photo),
       location: speciesData.location ?? null,
       createdAt: now,
       updatedAt: now,
@@ -302,26 +319,104 @@ export default function App({ initialObservations }) {
     geoFindMe(newObservation.id);
     addPhoto(newObservation.id, newObservation.photo).catch(() => {});
     return newObservation.id;
-  };
+  }
 
-  const closeObservationDetail = () => {
+  function selectObservation(observation) {
+    setSelectedObservation(observation);
+  }
+
+  function closeObservationDetail() {
     setSelectedObservation(null);
     setCurrentView((prev) => (prev === "map" ? "map" : "feed"));
-  };
+  }
 
-  const closeMapObservationDetail = () => {
+  function closeMapObservationDetail() {
     setSelectedObservation(null);
-  };
+  }
 
-  const likeObservation = (observationId) => {
-    setObservations((prev) =>
-      prev.map((obs) =>
-        obs.id === observationId ? { ...obs, likes: obs.likes + 1 } : obs
-      )
+  function editObservation(observationId, updates) {
+    const now = Date.now();
+
+    updateObservationById(observationId, (observation) => ({
+      ...observation,
+      ...updates,
+      updatedAt: now,
+    }));
+
+    updateSelectedObservationById(observationId, (observation) => ({
+      ...observation,
+      ...updates,
+      updatedAt: now,
+    }));
+  }
+
+  function handleEditObservation(observation) {
+    const newSpecies = prompt("Edit species name:", observation.species || "");
+    if (newSpecies === null) return;
+
+    const newDescription = prompt(
+      "Edit description:",
+      observation.description || observation.notes || ""
     );
-  };
+    if (newDescription === null) return;
 
-  const addObservationComment = (observationId, commentText, parentId = null) => {
+    editObservation(observation.id, {
+      species: newSpecies.trim(),
+      description: newDescription.trim(),
+    });
+  }
+
+  function likeObservation(observationId) {
+    updateObservationById(observationId, (observation) => ({
+      ...observation,
+      likes: observation.likes + 1,
+    }));
+  }
+
+  function toggleObservationVisibility(observationId) {
+    updateObservationById(observationId, (observation) => ({
+      ...observation,
+      isPublic: !observation.isPublic,
+    }));
+  }
+
+  function photoedTask(id) {
+    if (!id) {
+      setCurrentView("feed");
+      return;
+    }
+
+    console.log("photoedTask", id);
+    const now = Date.now();
+
+    updateObservationById(id, (observation) => ({
+      ...observation,
+      photoed: true,
+      updatedAt: now,
+    }));
+
+    updateSelectedObservationById(id, (observation) => ({
+      ...observation,
+      photoed: true,
+      updatedAt: now,
+    }));
+
+    setCurrentView("feed");
+  }
+
+  function handleScannerSaved(id) {
+    photoedTask(id);
+  }
+
+  function deleteObservation(observationId) {
+    setObservations((prev) => prev.filter((obs) => obs.id !== observationId));
+    if (selectedObservation?.id === observationId) {
+      setSelectedObservation(null);
+    }
+  }
+
+  // Observation comments CRUD
+  function addObservationComment(observationId, commentText, parentId = null) {
     setObservations((prev) =>
       prev.map((observation) => {
         if (observation.id === observationId) {
@@ -343,9 +438,9 @@ export default function App({ initialObservations }) {
         return observation;
       })
     );
-  };
+  }
 
-  const likeObservationComment = (observationId, commentId) => {
+  function likeObservationComment(observationId, commentId) {
     setObservations((prev) =>
       prev.map((observation) => {
         if (observation.id === observationId) {
@@ -361,9 +456,9 @@ export default function App({ initialObservations }) {
         return observation;
       })
     );
-  };
+  }
 
-  const deleteObservationComment = (observationId, commentId) => {
+  function deleteObservationComment(observationId, commentId) {
     setObservations((prev) =>
       prev.map((observation) => {
         if (observation.id === observationId) {
@@ -385,18 +480,23 @@ export default function App({ initialObservations }) {
         return observation;
       })
     );
-  };
+  }
 
-  const editUserProfile = () => {
+  // User profile actions
+  function editUserProfile() {
     const newUsername = prompt("Enter your username:", user.username);
     const newBio = prompt("Enter your bio:", user.bio);
 
     if (newUsername !== null && newUsername.trim() !== "") {
       setUser({ ...user, username: newUsername.trim(), bio: newBio?.trim() || user.bio });
     }
-  };
+  }
 
-  const logoutUser = () => {
+  function updateUserAvatar(avatarDataUrl) {
+    setUser((prev) => ({ ...prev, avatar: avatarDataUrl }));
+  }
+
+  function logoutUser() {
     const confirmed = window.confirm("Are you sure you want to logout?");
     if (confirmed) {
       setUser({
@@ -408,74 +508,7 @@ export default function App({ initialObservations }) {
       setObservations([]);
       setCurrentView("feed");
     }
-  };
-
-  const updateUserAvatar = (avatarDataUrl) => {
-    setUser((prev) => ({ ...prev, avatar: avatarDataUrl }));
-  };
-
-  const selectObservation = (observation) => {
-    setSelectedObservation(observation);
-  };
-
-  const handleScannerSaved = () => {
-    setCurrentView("feed");
-  };
-
-  const deleteObservation = (observationId) => {
-    setObservations((prev) => prev.filter((obs) => obs.id !== observationId));
-    if (selectedObservation?.id === observationId) {
-      setSelectedObservation(null);
-    }
-  };
-
-const editObservation = (observationId, updates) => {
-  setObservations((prev) =>
-    prev.map((observation) =>
-      observation.id === observationId
-        ? {
-            ...observation,
-            ...updates,
-            updatedAt: Date.now(),
-          }
-        : observation
-    )
-  );
-
-  setSelectedObservation((prev) =>
-    prev?.id === observationId
-      ? {
-          ...prev,
-          ...updates,
-          updatedAt: Date.now(),
-        }
-      : prev
-  );
-};
-
-const handleEditObservation = (observation) => {
-  const newSpecies = prompt("Edit species name:", observation.species || "");
-  if (newSpecies === null) return;
-
-  const newDescription = prompt(
-    "Edit description:",
-    observation.description || observation.notes || ""
-  );
-  if (newDescription === null) return;
-
-  editObservation(observation.id, {
-    species: newSpecies.trim(),
-    description: newDescription.trim(),
-  });
-};
-
-  const toggleObservationVisibility = (observationId) => {
-    setObservations((prev) =>
-      prev.map((observation) =>
-        observation.id === observationId ? { ...observation, isPublic: !observation.isPublic } : observation
-      )
-    );
-  };
+  }
 
   return (
     <div className="app-container">
@@ -503,6 +536,7 @@ const handleEditObservation = (observation) => {
         {currentView === "scan" && (
           <SpeciesScanner
             addObservation={addObservation}
+            photoedTask={photoedTask}
             geoFindMe={geoFindMe}
             onSaved={handleScannerSaved}
             onCancel={() => setCurrentView("feed")}

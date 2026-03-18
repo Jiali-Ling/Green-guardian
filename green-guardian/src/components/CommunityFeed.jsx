@@ -13,25 +13,57 @@ const VISIBILITY_FILTER_MAP = {
   done: (obs) => obs.isPublic !== false,
 };
 
+function applyScopeFilter(observations, scopeFilter, currentUserId) {
+  const predicate = SCOPE_FILTER_MAP[scopeFilter] || SCOPE_FILTER_MAP.all;
+  return observations.filter((observation) => predicate(observation, currentUserId));
+}
+
+function applyVisibilityFilter(observations, statusFilter) {
+  const predicate = VISIBILITY_FILTER_MAP[statusFilter] || VISIBILITY_FILTER_MAP.all;
+  return observations.filter((observation) => predicate(observation));
+}
+
+function applySearchFilter(observations, searchTerm) {
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  if (!normalizedSearch) return observations;
+
+  return observations.filter((observation) => {
+    const species = observation.species?.toLowerCase() || "";
+    const description = observation.description?.toLowerCase() || "";
+    return species.includes(normalizedSearch) || description.includes(normalizedSearch);
+  });
+}
+
+function sortByNewest(observations) {
+  return [...observations].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+}
+
+function getTimeAgo(timestamp) {
+  if (!timestamp) return "Recently";
+  const now = Date.now();
+  const diff = now - timestamp;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day ago";
+  if (days < 7) return `${days} days ago`;
+  return new Date(timestamp).toLocaleDateString();
+}
+
+function truncateDescription(text, maxLength = 80) {
+  if (!text) return "";
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}
+
 export default function CommunityFeed({ observations, onSelectObservation, currentUserId, onDeleteObservation, onTogglePublic }) {
   const [scopeFilter, setScopeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredObservations = useMemo(() => {
-    let result = [...observations]
-      .filter((obs) => (SCOPE_FILTER_MAP[scopeFilter] || SCOPE_FILTER_MAP.all)(obs, currentUserId))
-      .filter((obs) => (VISIBILITY_FILTER_MAP[statusFilter] || VISIBILITY_FILTER_MAP.all)(obs));
-
-    if (searchTerm) {
-      result = result.filter(
-        (obs) =>
-          obs.species?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          obs.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    return result.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const byScope = applyScopeFilter(observations, scopeFilter, currentUserId);
+    const byVisibility = applyVisibilityFilter(byScope, statusFilter);
+    const bySearch = applySearchFilter(byVisibility, searchTerm);
+    return sortByNewest(bySearch);
   }, [observations, scopeFilter, statusFilter, searchTerm, currentUserId]);
 
   return (
@@ -121,38 +153,30 @@ function ObservationCard({ observation, latitude, longitude, onClick, onDelete, 
   const likeCount = observation.likes || 0;
   const commentCount = observation.comments?.length || 0;
   const isOwner = observation.userId === currentUserId;
+  const description = truncateDescription(observation.description);
 
-  const handleLike = (e) => {
+  function handleLike(e) {
     e.stopPropagation();
     setLiked(!liked);
-  };
+  }
 
-  const handleDelete = (e) => {
+  function handleDelete(e) {
     e.stopPropagation();
+    if (typeof onDelete !== "function") return;
     if (window.confirm("Delete this observation?")) {
       onDelete();
     }
-  };
+  }
 
-  const handleImageError = () => {
+  function handleImageError() {
     setImageError(true);
-  };
+  }
 
-  const handleTogglePublic = (e) => {
+  function handleTogglePublic(e) {
     e.stopPropagation();
+    if (typeof onTogglePublic !== "function") return;
     onTogglePublic(observation.id);
-  };
-
-  const getTimeAgo = (timestamp) => {
-    if (!timestamp) return "Recently";
-    const now = Date.now();
-    const diff = now - timestamp;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return "Today";
-    if (days === 1) return "1 day ago";
-    if (days < 7) return `${days} days ago`;
-    return new Date(timestamp).toLocaleDateString();
-  };
+  }
 
   return (
     <div className="observation-card" onClick={onClick}>
@@ -196,11 +220,7 @@ function ObservationCard({ observation, latitude, longitude, onClick, onDelete, 
         </div>
 
         {observation.description && (
-          <p className="card-description">
-            {observation.description.length > 80
-              ? observation.description.slice(0, 80) + "..."
-              : observation.description}
-          </p>
+          <p className="card-description">{description}</p>
         )}
 
         {latitude != null && longitude != null && (

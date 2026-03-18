@@ -18,7 +18,8 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 
 ### Device APIs Integration
 - Camera API: `navigator.mediaDevices.getUserMedia()` for wildlife photography
-- Webcam Capture: `react-webcam` for popup-based capture flow in observation detail
+- WebcamCapture-style flow: `useRef` + `useState` + `useEffect` + `useCallback` in `SpeciesScanner` (capture/save/cancel workflow)
+- `react-webcam` in scanner for `webcamRef.current.getScreenshot()` capture pattern
 - Geolocation API: `navigator.geolocation` for GPS coordinates with accuracy tracking
 - DeviceOrientation API: Compass and AR navigation features
 - LocalStorage: Fallback/compatibility persistence for key app state
@@ -110,8 +111,8 @@ Scrolling landing page introducing app features with:
 ### UI & Animation
 - Lucide React 0.468.0: Icon library (100+ icons)
 - Framer Motion 12.35.1: Animation library
-- reactjs-popup 2.x: Modal popups for take-photo/view-photo workflow
-- react-webcam 7.x: Camera preview and screenshot capture in popup
+- reactjs-popup 2.x: Modal popup for observation photo viewing (IndexedDB verification)
+- react-webcam 7.x: Camera stream and screenshot capture in scanner
 
 ---
 
@@ -194,10 +195,10 @@ The app has 5 main tabs in the bottom navigation:
 1. Tap the Scan tab (camera icon)
 2. Grant camera permissions when prompted
 3. Point camera at wildlife and tap capture button
-4. Wait for AI to analyze (first load downloads ~20MB model)
-5. Review species prediction and confidence score
-6. Add location notes or description
-7. Tap Identify Species (or Save Photo fallback) to save the observation
+4. Review the captured image and choose Cancel (retake) or Identify & Save
+5. Wait for AI to analyze (first load downloads ~20MB model)
+6. The app saves species prediction, confidence, and photo together
+7. If AI is unavailable, fallback uses "Unknown Species" and still saves the observation
 8. After save, the app returns to Feed and opens the saved observation detail so you can edit immediately
 
 ### Exploring the Map
@@ -216,7 +217,7 @@ The app has 5 main tabs in the bottom navigation:
 5. Like observations with heart button
 6. Add comments and reply to others
 7. Edit your own observations (species/description)
-8. Open popup-based Take Photo / View Photo actions in observation detail
+8. Open popup-based View Photo action in observation detail (reads from IndexedDB)
 9. Delete your own observations (trash icon)
 
 ---
@@ -350,13 +351,19 @@ The app has 5 main tabs in the bottom navigation:
 - Step 6 (Live read hook): `GetPhotoSrc(id)` reads from `photos` using `useLiveQuery` and returns `img[0].imgSrc` when available
 - Step 7 (Exports): helper functions are exported together at the bottom of `src/db.jsx` (e.g., `export { addPhoto, GetPhotoSrc, ... }`)
 
-### UI Adaptation Alignment (Todo.jsx-style)
-- Observation detail component imports and uses: `Popup` (`reactjs-popup`), popup CSS, `Webcam` (`react-webcam`), and `{ addPhoto, GetPhotoSrc }` from `db.jsx`
-- Uses a `viewTemplate`-style JSX variable pattern before returning (structure aligned with tutorial style)
-- Uses `Popup trigger={...} modal` for both "Take Photo" and "View Photo" interactions
-- The modal includes map and SMS sharing links for location context
-- Take Photo popup writes to Dexie through `addPhoto`
-- View Photo popup reads from Dexie via `GetPhotoSrc`
+### UI Adaptation Alignment (Todo.jsx / WebcamCapture-style)
+- App includes a tutorial-style `photoedTask(id)` flow: map over observations, mark matched item with `photoed: true`, update state, and refresh UI
+- `SpeciesScanner` receives `photoedTask` from `App.jsx` to complete the capture -> mark -> display workflow
+- Scanner component uses function declaration style `function WebcamCapture(props) { ... }` in `src/components/SpeciesScanner.jsx`
+- `SpeciesScanner` uses the same core hook structure: `useRef`, `useState`, `useEffect`, `useCallback`
+- Uses `webcamRef` naming in scanner capture flow (tutorial-style naming alignment)
+- `capture(id)` callback uses `webcamRef.current.getScreenshot()`, stores preview in `imgSrc`, and logs in tutorial style
+- `savePhoto(id, imgSrc)` and `cancelPhoto(id, imgSrc)` provide explicit save/cancel flow after capture
+- `photoSave` state is observed by a block-style `useEffect` (`if (photoSave) { ... }`) to trigger parent callback flow (tutorial-aligned pattern)
+- Scanner control JSX follows tutorial pattern with `!imgSrc` -> `Capture photo` button and `imgSrc` -> `Save photo` + `Cancel` buttons using `onClick={() => capture(props.id)}`, `onClick={() => savePhoto(props.id, imgSrc)}`, `onClick={() => cancelPhoto(props.id, imgSrc)}`
+- Observation detail keeps a `Popup trigger={...} modal` View Photo action
+- View photo logic is extracted as `function ViewPhoto(props) { ... }`, where `const photoSrc = GetPhotoSrc(props.id)` and `<img src={photoSrc} alt={props.name} />` follow the tutorial structure
+- View Photo popup renders `<ViewPhoto id={observation.id} name={observation.species} />`
 
 ### Styling Approach
 - Component-scoped CSS files

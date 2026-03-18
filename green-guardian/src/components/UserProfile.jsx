@@ -1,29 +1,56 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { User, Award, MapPin, Camera, Settings, LogOut, Trash2 } from "lucide-react";
 import "../styles/UserProfile.css";
 
 export default function UserProfile({ user, observations, onEditProfile, onLogout, onDeleteObservation, onObservationClick, onUpdateAvatar }) {
   const fileInputRef = useRef(null);
-  const userObservations = observations.filter((obs) => obs.userId === user.id);
-  const speciesCount = new Set(userObservations.map((obs) => obs.species)).size;
+  const userObservations = useMemo(
+    () => observations.filter((observation) => observation.userId === user.id),
+    [observations, user.id]
+  );
   const totalObservations = userObservations.length;
+  const speciesCount = useMemo(
+    () => new Set(userObservations.map((observation) => observation.species)).size,
+    [userObservations]
+  );
+  const visitedLocationsCount = useMemo(
+    () => userObservations.filter((observation) => observation.location).length,
+    [userObservations]
+  );
+  const recentObservations = useMemo(
+    () => [...userObservations]
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+      .slice(0, 6),
+    [userObservations]
+  );
 
-  const recentObservations = userObservations
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-    .slice(0, 6);
+  const canDeleteObservation = typeof onDeleteObservation === "function";
 
-  const handleAvatarClick = () => {
+  function handleAvatarClick() {
     fileInputRef.current?.click();
-  };
+  }
 
-  const handleFileChange = (e) => {
+  function handleFileChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (evt) => onUpdateAvatar?.(evt.target.result);
     reader.readAsDataURL(file);
     e.target.value = "";
-  };
+  }
+
+  function handleObservationClick(observation) {
+    onObservationClick?.(observation);
+  }
+
+  function handleObservationDelete(event, observationId) {
+    event.stopPropagation();
+    if (!canDeleteObservation) return;
+    if (window.confirm("Delete this observation?")) {
+      onDeleteObservation(observationId);
+    }
+  }
 
   return (
     <div className="user-profile">
@@ -85,9 +112,7 @@ export default function UserProfile({ user, observations, onEditProfile, onLogou
         </div>
         <div className="stat-card">
           <MapPin className="stat-icon" size={24} />
-          <div className="stat-value">
-            {userObservations.filter((obs) => obs.location).length}
-          </div>
+          <div className="stat-value">{visitedLocationsCount}</div>
           <div className="stat-label">Locations</div>
         </div>
       </div>
@@ -106,14 +131,11 @@ export default function UserProfile({ user, observations, onEditProfile, onLogou
         ) : (
           <div className="observations-grid">
             {recentObservations.map((obs) => (
-              <div key={obs.id} className="observation-thumb" onClick={() => onObservationClick?.(obs)}>
-                {onDeleteObservation && (
+              <div key={obs.id} className="observation-thumb" onClick={() => handleObservationClick(obs)}>
+                {canDeleteObservation && (
                   <button
                     className="thumb-delete-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm("Delete this observation?")) onDeleteObservation(obs.id);
-                    }}
+                    onClick={(event) => handleObservationDelete(event, obs.id)}
                     aria-label="Delete observation"
                   >
                     <Trash2 size={16} />

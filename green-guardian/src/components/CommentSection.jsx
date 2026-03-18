@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Send, Heart, Trash2, User } from "lucide-react";
 import "../styles/CommentSection.css";
 
@@ -6,11 +6,24 @@ export default function CommentSection({ observationId, comments = [], currentUs
   const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
+  const rootComments = useMemo(
+    () => comments.filter((comment) => !comment.parentId),
+    [comments]
+  );
 
-    onAddComment({
+  const repliesByParentId = useMemo(() => {
+    return comments.reduce((acc, comment) => {
+      if (!comment.parentId) return acc;
+      if (!acc[comment.parentId]) {
+        acc[comment.parentId] = [];
+      }
+      acc[comment.parentId].push(comment);
+      return acc;
+    }, {});
+  }, [comments]);
+
+  function createCommentPayload() {
+    return {
       id: Date.now().toString(),
       observationId,
       userId: currentUserId,
@@ -18,13 +31,18 @@ export default function CommentSection({ observationId, comments = [], currentUs
       createdAt: Date.now(),
       likes: 0,
       parentId: replyingTo,
-    });
+    };
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    onAddComment(createCommentPayload());
 
     setNewComment("");
     setReplyingTo(null);
-  };
-
-  const rootComments = comments.filter((c) => !c.parentId);
+  }
 
   return (
     <div className="comment-section">
@@ -71,7 +89,7 @@ export default function CommentSection({ observationId, comments = [], currentUs
               onReply={() => setReplyingTo(comment.id)}
               onDelete={() => onDeleteComment(comment.id)}
               onLike={() => onLikeComment(comment.id)}
-              replies={comments.filter((c) => c.parentId === comment.id)}
+              replies={repliesByParentId[comment.id] || []}
             />
           ))
         )}
@@ -83,11 +101,13 @@ export default function CommentSection({ observationId, comments = [], currentUs
 function CommentItem({ comment, currentUserId, onReply, onDelete, onLike, replies }) {
   const [liked, setLiked] = useState(false);
   const isOwner = comment.userId === currentUserId;
+  const commentLikeCount = (comment.likes || 0) + (liked ? 1 : 0);
+  const displayName = `User ${comment.userId?.slice(0, 6)}`;
 
-  const handleLike = () => {
+  function handleLike() {
     setLiked(!liked);
     onLike();
-  };
+  }
 
   return (
     <div className="comment-item">
@@ -97,7 +117,7 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onLike, replie
       
       <div className="comment-content">
         <div className="comment-header-row">
-          <span className="comment-user">User {comment.userId?.slice(0, 6)}</span>
+          <span className="comment-user">{displayName}</span>
           <span className="comment-time">
             {new Date(comment.createdAt).toLocaleDateString()}
           </span>
@@ -108,7 +128,7 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onLike, replie
         <div className="comment-actions">
           <button className={`action-btn ${liked ? "liked" : ""}`} onClick={handleLike}>
             <Heart size={14} fill={liked ? "currentColor" : "none"} />
-            <span>{(comment.likes || 0) + (liked ? 1 : 0)}</span>
+            <span>{commentLikeCount}</span>
           </button>
           <button className="action-btn" onClick={onReply}>
             Reply

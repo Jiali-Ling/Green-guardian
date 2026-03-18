@@ -1,6 +1,27 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import * as mobilenet from "@tensorflow-models/mobilenet";
 import * as tf from "@tensorflow/tfjs";
+
+const MODEL_CONFIG = {
+  version: 1,
+  alpha: 0.25,
+};
+
+const MODEL_UNAVAILABLE_MESSAGE = "AI model unavailable. You can still take photos without AI recognition.";
+
+async function loadModelWithBackend(backendName) {
+  await tf.setBackend(backendName);
+  await tf.ready();
+  return mobilenet.load(MODEL_CONFIG);
+}
+
+function mapPredictions(predictions) {
+  return predictions.map((prediction) => ({
+    species: prediction.className,
+    confidence: Math.round(prediction.probability * 100),
+    scientificName: prediction.className,
+  }));
+}
 
 export default function useSpeciesRecognition() {
   const [model, setModel] = useState(null);
@@ -15,25 +36,16 @@ export default function useSpeciesRecognition() {
     try {
       setIsLoading(true);
       setError(null);
-      
-      await tf.setBackend('webgl');
-      await tf.ready();
-      
-      const loadedModel = await mobilenet.load({
-        version: 1,
-        alpha: 0.25,
-      });
-      
+
+      const loadedModel = await loadModelWithBackend("webgl");
       setModel(loadedModel);
     } catch (err) {
       try {
-        await tf.setBackend('cpu');
-        await tf.ready();
-        const loadedModel = await mobilenet.load({ version: 1, alpha: 0.25 });
+        const loadedModel = await loadModelWithBackend("cpu");
         setModel(loadedModel);
         setError(null);
       } catch (fallbackErr) {
-        setError("AI model unavailable. You can still take photos without AI recognition.");
+        setError(MODEL_UNAVAILABLE_MESSAGE);
       }
     } finally {
       setIsLoading(false);
@@ -47,14 +59,7 @@ export default function useSpeciesRecognition() {
 
     try {
       const predictions = await model.classify(imageElement);
-      
-      const results = predictions.map((pred) => ({
-        species: pred.className,
-        confidence: Math.round(pred.probability * 100),
-        scientificName: pred.className,
-      }));
-
-      return results;
+      return mapPredictions(predictions);
     } catch (err) {
       throw new Error("Failed to classify image");
     }
