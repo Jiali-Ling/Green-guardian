@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from "react";
-import { Moon, Sun, WifiOff } from "lucide-react";
+import { Moon, Sun, WifiOff, MapPin } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { nanoid } from "nanoid";
 import { sampleObservations, defaultUser } from "./data/sampleObservations";
@@ -105,6 +105,11 @@ export default function App({ initialObservations }) {
     description: "",
   });
   const [isDexieReady, setIsDexieReady] = useState(false);
+  const [locationNotice, setLocationNotice] = useState({
+    type: "",
+    message: "",
+  });
+
 
   // Shared state updaters keep observation mutations easy to scan.
   function updateObservationById(observationId, updater) {
@@ -137,6 +142,16 @@ export default function App({ initialObservations }) {
       window.removeEventListener("offline", onOffline);
     };
   }, []);
+
+  useEffect(() => {
+    if (!locationNotice.message) return;
+
+    const timer = window.setTimeout(() => {
+      setLocationNotice({ type: "", message: "" });
+    }, 4000);
+
+    return () => window.clearTimeout(timer);
+  }, [locationNotice]);
 
   useEffect(() => {
     let cancelled = false;
@@ -233,34 +248,21 @@ export default function App({ initialObservations }) {
     }));
   }
 
-  function geoFindMe(observationId = null) {
-    if (!navigator.geolocation) {
-      console.log("Geolocation is not supported by your browser");
-      handleGeolocationError();
-    } else {
-      console.log("Locating...");
-      navigator.geolocation.getCurrentPosition(
-        (position) => handleGeolocationSuccess(position, observationId),
-        (err) => handleGeolocationError(err),
-        {
-          enableHighAccuracy: true,
-          timeout: 20000,
-          maximumAge: 0,
-        }
-      );
-    }
-  }
-
   function handleGeolocationSuccess(position, observationId = null) {
-    const latitude = position.coords.latitude;
-    const longitude = position.coords.longitude;
-    console.log(`Latitude: ${latitude} ° , Longitude: ${longitude} °`);
-
-    console.log(`Latituded:${latitude}, Longitude:${longitude}`);
-    console.log(`Try here: https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`);
-
+    const latitude = Number(position?.coords?.latitude);
+    const longitude = Number(position?.coords?.longitude);
     const accuracy = Number(position?.coords?.accuracy);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(accuracy) || accuracy <= 0) {
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      !Number.isFinite(accuracy) ||
+      accuracy <= 0
+    ) {
+      setLocationNotice({
+        type: "warning",
+        message: "Location signal is weak. Please try again in an open area.",
+      });
       return;
     }
 
@@ -280,7 +282,30 @@ export default function App({ initialObservations }) {
   }
 
   function handleGeolocationError() {
-    console.log("Unable to retrieve your exact location");
+    setLocationNotice({
+      type: "error",
+      message: "Unable to retrieve your location. Check GPS permission and try again.",
+    });
+  }
+
+  function geoFindMe(observationId = null) {
+    if (!navigator.geolocation) {
+      setLocationNotice({
+        type: "warning",
+        message: "Geolocation is not supported by this browser.",
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => handleGeolocationSuccess(position, observationId),
+      () => handleGeolocationError(),
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0,
+      }
+    );
   }
 
   useEffect(() => {
@@ -572,9 +597,17 @@ function deleteObservationComment(observationId, commentId) {
       {!isOnline && (
         <div className="offline-banner" role="alert">
           <WifiOff size={16} />
-          <span>You're offline — changes will sync when reconnected</span>
+          <span>You're offline — cached pages and local data are still available</span>
         </div>
+     )}
+
+     {locationNotice.message && (
+      <div className={`geo-banner geo-banner--${locationNotice.type || "info"}`} role="status">
+        <MapPin size={16} />
+        <span>{locationNotice.message}</span>
+      </div>
       )}
+
       <div className="view-container">
         {currentView === "home" && (
           <HomePage onNavigate={setCurrentView} />

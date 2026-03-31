@@ -1502,6 +1502,42 @@ p {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
+.geo-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(var(--nav-height-mobile) + 28px + var(--safe-bottom));
+  z-index: 980;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-large);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.geo-banner--success {
+  background: #166534;
+  color: #ecfdf5;
+}
+
+.geo-banner--warning {
+  background: #92400e;
+  color: #fffbeb;
+}
+
+.geo-banner--error {
+  background: #991b1b;
+  color: #fef2f2;
+}
+
+.geo-banner--info {
+  background: #1d4ed8;
+  color: #eff6ff;
+}
+
 /* =================== GLOBAL FOCUS RING =================== */
 :focus-visible {
   outline: 2px solid var(--ring-color);

@@ -1,10 +1,43 @@
-import { useState } from "react";
-import { Camera, Map, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Camera, Map, X, Navigation, MapPin } from "lucide-react";
 import ARCameraView from "./ARCameraView";
+import { calculateDistance } from "../hooks/useGeolocation";
 import "../styles/NavigationPanel.css";
 
 export default function NavigationPanel({ observation, latitude, longitude, onClose }) {
   const [mode, setMode] = useState("map");
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationError("This browser does not support live directions.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+        setLocationError("");
+      },
+      (error) => {
+        if (error.code === 1) {
+          setLocationError("Location permission was denied. You can still open the observation on the map.");
+          return;
+        }
+        setLocationError("Unable to read your current location.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  }, []);
 
   if (!observation || latitude == null || longitude == null) {
     return null;
@@ -19,6 +52,16 @@ export default function NavigationPanel({ observation, latitude, longitude, onCl
       />
     );
   }
+
+  const googleDirectionsHref = currentLocation
+    ? `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${latitude},${longitude}&travelmode=walking`
+    : `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+  const openStreetMapHref = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=16/${latitude}/${longitude}`;
+
+  const distanceText = currentLocation
+    ? `${(calculateDistance(currentLocation.lat, currentLocation.lng, latitude, longitude) / 1000).toFixed(2)} km away`
+    : "Current distance unavailable";
 
   return (
     <div className="navigation-panel">
@@ -47,12 +90,56 @@ export default function NavigationPanel({ observation, latitude, longitude, onCl
       </div>
 
       <div className="nav-content">
-        <div className="map-placeholder">
-          <Map size={64} />
-          <p>Map directions view (integration with map component)</p>
-          <p className="map-hint">
-            Location: {latitude.toFixed(4)}, {longitude.toFixed(4)}
-          </p>
+        <div className="nav-route-card">
+          <div className="nav-route-meta">
+            <div className="nav-route-row">
+              <MapPin size={18} />
+              <div>
+                <strong>Target location</strong>
+                <p>{latitude.toFixed(6)}, {longitude.toFixed(6)}</p>
+              </div>
+            </div>
+
+            <div className="nav-route-row">
+              <Navigation size={18} />
+              <div>
+                <strong>Distance</strong>
+                <p>{distanceText}</p>
+              </div>
+            </div>
+
+            {currentLocation?.accuracy ? (
+              <p className="nav-route-note">
+                Your location accuracy: ±{Math.round(currentLocation.accuracy)}m
+              </p>
+            ) : null}
+
+            {locationError ? (
+              <p className="nav-route-note">{locationError}</p>
+            ) : null}
+          </div>
+
+          <div className="nav-route-actions">
+            <a
+              className="nav-action-btn nav-action-btn--primary"
+              href={googleDirectionsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Navigation size={18} />
+              Open directions
+            </a>
+
+            <a
+              className="nav-action-btn"
+              href={openStreetMapHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Map size={18} />
+              Open in OpenStreetMap
+            </a>
+          </div>
         </div>
       </div>
     </div>

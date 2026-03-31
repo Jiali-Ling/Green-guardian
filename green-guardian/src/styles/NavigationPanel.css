@@ -149,6 +149,67 @@
   font-family: monospace;
 }
 
+.nav-route-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.nav-route-meta {
+  display: grid;
+  gap: 16px;
+}
+
+.nav-route-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: #2d3748;
+}
+
+.nav-route-row strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.nav-route-row p {
+  margin: 0;
+  color: #718096;
+}
+
+.nav-route-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.nav-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(127, 184, 0, 0.3);
+  background: white;
+  color: #2d3748;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav-action-btn--primary {
+  background: linear-gradient(135deg, #7fb800, #81b29a);
+  color: white;
+  border-color: transparent;
+}
+
+.nav-route-note {
+  font-size: 14px;
+  color: #718096;
+}
+
 /* =================== DARK MODE =================== */
 [data-theme="dark"] .navigation-panel {
   background: linear-gradient(135deg, #0d1a0d 0%, #1a2e1a 100%);
@@ -200,4 +261,24 @@
 
 [data-theme="dark"] .map-hint {
   color: #6b9b6b;
+}
+
+[data-theme="dark"] .nav-route-card {
+  background: #162a16;
+  border-color: rgba(127, 184, 0, 0.15);
+}
+
+[data-theme="dark"] .nav-route-row {
+  color: #e8f2e3;
+}
+
+[data-theme="dark"] .nav-route-row p,
+[data-theme="dark"] .nav-route-note {
+  color: #81b29a;
+}
+
+[data-theme="dark"] .nav-action-btn {
+  background: #1e3a1e;
+  color: #e8f2e3;
+  border-color: rgba(127, 184, 0, 0.2);
 }
