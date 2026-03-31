@@ -12,6 +12,7 @@ import {
   replaceAllPhotosInDb,
   setUserInDb,
 } from "./db";
+import usePersistedState from "./hooks/usePersistedState";
 import BottomNav from "./components/BottomNav";
 import BottomSheetModal from "./components/BottomSheetModal";
 import CommentSection from "./components/CommentSection";
@@ -34,24 +35,6 @@ import "./styles/SpeciesDetailModal.css";
 import "./styles/SpeciesScanner.css";
 import "./styles/UserProfile.css";
 
-function usePersistedState(key, defaultValue) {
-  const [state, setState] = useState(() => {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : defaultValue;
-    } catch (e) {
-      return defaultValue;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(state));
-    } catch (e) {}
-  }, [key, state]);
-
-  return [state, setState];
-}
 
 const OBSERVATIONS_STORAGE_KEY = "green_guardian_observations";
 const USER_STORAGE_KEY = "green_guardian_user";
@@ -60,7 +43,7 @@ function readLocalStorageValue(key, fallbackValue) {
   try {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : fallbackValue;
-  } catch (e) {
+  } catch {
     return fallbackValue;
   }
 }
@@ -179,8 +162,8 @@ export default function App({ initialObservations }) {
         } else {
           await setUserInDb(user);
         }
-      } catch (e) {
-        console.error("Dexie hydration failed, falling back to localStorage:", e);
+      } catch (error) {
+        console.error("Failed to save user to localStorage:", error);
       } finally {
         if (!cancelled) {
           setIsDexieReady(true);
@@ -198,7 +181,9 @@ export default function App({ initialObservations }) {
   useEffect(() => {
     try {
       localStorage.setItem(OBSERVATIONS_STORAGE_KEY, JSON.stringify(observations));
-    } catch (e) {}
+    } catch (error) {
+      console.error("Failed to save observations to localStorage:", error);
+    }
   }, [observations]);
 
   useEffect(() => {
@@ -210,7 +195,9 @@ export default function App({ initialObservations }) {
   useEffect(() => {
     try {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    } catch (e) {}
+    } catch (error) {
+      console.error("Failed to save user to localStorage:", error);
+    }
   }, [user]);
 
   useEffect(() => {

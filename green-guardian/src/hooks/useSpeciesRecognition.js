@@ -39,12 +39,12 @@ export default function useSpeciesRecognition() {
 
       const loadedModel = await loadModelWithBackend("webgl");
       setModel(loadedModel);
-    } catch (err) {
+    } catch {
       try {
         const loadedModel = await loadModelWithBackend("cpu");
         setModel(loadedModel);
         setError(null);
-      } catch (fallbackErr) {
+      } catch {
         setError(MODEL_UNAVAILABLE_MESSAGE);
       }
     } finally {
@@ -60,7 +60,7 @@ export default function useSpeciesRecognition() {
     try {
       const predictions = await model.classify(imageElement);
       return mapPredictions(predictions);
-    } catch (err) {
+    } catch {
       throw new Error("Failed to classify image");
     }
   };

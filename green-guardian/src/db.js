@@ -1,5 +1,4 @@
 import Dexie from "dexie";
-import { useLiveQuery } from "dexie-react-hooks";
 
 export const db = new Dexie("green_guardian_db");
 
@@ -16,54 +15,49 @@ db.version(1).stores({
   keyValue: KEY_VALUE_SCHEMA,
 });
 
-async function addPhoto(id, imgSrc) {
-  if (!isValidPhotoPayload(id, imgSrc)) {
-    return null;
-  }
-  try {
-    await db.photos.put({ id, imgSrc });
-    console.log(`Photo ${imgSrc.length} bytes successfully added. Got id ${id}`);
-    return id;
-  } catch (error) {
-    console.log(`Failed to add photo: ${error}`);
-    return null;
-  }
-}
-
-function GetPhotoSrc(id) {
-  try {
-    const rows = useLiveQuery(() => {
-      if (!id) return [];
-      return db.photos.where("id").equals(id).toArray();
-    }, [id]);
-
-    if (Array.isArray(rows) && rows.length > 0) {
-      return rows[0].imgSrc;
-    }
-  } catch (error) {
-    console.log(`Failed to get photo source: ${error}`);
-  }
-
-  return null;
-}
-
 db.version(2).stores({
   observations: OBSERVATIONS_SCHEMA,
   keyValue: KEY_VALUE_SCHEMA,
   photos: PHOTOS_SCHEMA,
 });
 
-const dbReady = db.open().catch((error) => {
+export const dbReady = db.open().catch((error) => {
   console.error("Failed to open IndexedDB via Dexie:", error);
   return null;
 });
 
-async function getAllObservationsFromDb() {
+export async function addPhoto(id, imgSrc) {
+  if (!isValidPhotoPayload(id, imgSrc)) {
+    return null;
+  }
+
+  try {
+    await db.photos.put({ id, imgSrc });
+    console.log(`Photo ${imgSrc.length} bytes successfully added. Got id ${id}`);
+    return id;
+  } catch (error) {
+    console.error("Failed to add photo:", error);
+    return null;
+  }
+}
+
+export async function getPhotoById(id) {
+  if (!id) return null;
+
+  try {
+    return await db.photos.get(id);
+  } catch (error) {
+    console.error("Failed to get photo by id:", error);
+    return null;
+  }
+}
+
+export async function getAllObservationsFromDb() {
   const observations = await db.observations.toArray();
   return observations.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 }
 
-async function replaceAllObservationsInDb(observations) {
+export async function replaceAllObservationsInDb(observations) {
   await db.transaction("rw", db.observations, async () => {
     await db.observations.clear();
     if (Array.isArray(observations) && observations.length > 0) {
@@ -72,7 +66,7 @@ async function replaceAllObservationsInDb(observations) {
   });
 }
 
-async function replaceAllPhotosInDb(observations) {
+export async function replaceAllPhotosInDb(observations) {
   const photoRows = Array.isArray(observations)
     ? observations
         .filter((observation) => observation?.id && typeof observation?.photo === "string")
@@ -87,27 +81,11 @@ async function replaceAllPhotosInDb(observations) {
   });
 }
 
-async function getUserFromDb() {
+export async function getUserFromDb() {
   const record = await db.keyValue.get("user");
   return record?.value ?? null;
 }
 
-async function setUserInDb(user) {
+export async function setUserInDb(user) {
   await db.keyValue.put({ key: "user", value: user });
 }
-
-function useObservationsLiveQuery() {
-  return useLiveQuery(() => getAllObservationsFromDb(), []);
-}
-
-export {
-  addPhoto,
-  GetPhotoSrc,
-  dbReady,
-  getAllObservationsFromDb,
-  replaceAllObservationsInDb,
-  replaceAllPhotosInDb,
-  getUserFromDb,
-  setUserInDb,
-  useObservationsLiveQuery,
-};

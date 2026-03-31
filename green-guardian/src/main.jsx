@@ -23,7 +23,7 @@ const loadInitialObservations = () => {
     const raw = localStorage.getItem("green_guardian_observations");
     const parsed = raw ? JSON.parse(raw) : sampleObservations;
     return Array.isArray(parsed) ? parsed : sampleObservations;
-  } catch (e) {
+  } catch {
     return sampleObservations;
   }
 };

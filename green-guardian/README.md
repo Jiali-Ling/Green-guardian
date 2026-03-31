@@ -21,16 +21,16 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 - WebcamCapture-style flow: `useRef` + `useState` + `useEffect` + `useCallback` in `SpeciesScanner` (capture/save/cancel workflow)
 - `react-webcam` in scanner for `webcamRef.current.getScreenshot()` capture pattern
 - Geolocation API: `navigator.geolocation` for GPS coordinates with accuracy tracking
-- DeviceOrientation API: Compass and AR navigation features
-- LocalStorage: Fallback/compatibility persistence for key app state
-- IndexedDB (Dexie): Structured local database for observations and user cache
+- DeviceOrientation API: (Optional/Experimental) Compass support for AR navigation panel
+- LocalStorage: Fallback/compatibility persistence for key app state including theme preference
+- IndexedDB (Dexie): Structured local database for observations and photo storage
 
 ### Modern Technologies
 - Framework: React 19.2.0 with Hooks and functional components
 - Build Tool: Vite 7.3.1 with Hot Module Replacement (HMR)
 - AI/ML: TensorFlow.js 4.22.0 + MobileNet for on-device species recognition
 - Mapping: Leaflet 1.9.4 + React-Leaflet 5.0.0 for interactive maps
-- Icons: Lucide React for consistent vector icons
+- Icons: Lucide React 0.577.0 for consistent vector icons (100+ icons)
 - Animations: Framer Motion for smooth transitions
 
 ### User Experience
@@ -39,6 +39,7 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 - Accessibility: WCAG AA compliant color contrast ratios
 - Touch Optimized: Large tap targets and gesture support
 - Loading States: Skeleton screens and progress indicators
+- Dark Mode Toggle: User-selectable theme preference with automatic persistence
 
 ### Observation CRUD
 - Create: Add observations from Scan (camera capture + AI prediction)
@@ -52,11 +53,13 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 
 ### Home Page
 Scrolling landing page introducing app features with:
-- Animated hero section with background image
-- Statistics showcase (10K+ species, 50K+ users)
-- Feature grid highlighting AI, GPS, Community, Conservation
-- Step-by-step usage guide
-- Conservation impact metrics
+- Animated hero section with floating wildlife image cards
+- Global statistics showcase (10K+ species, 50K+ users, 200K+ observations, 98% AI accuracy)
+- Wildlife gallery with real community observations
+- Feature grid highlighting AI Recognition, Interactive Map, Community, and Conservation
+- Step-by-step "How It Works" usage guide (Scan → AI Identifies → Share & Protect)
+- User testimonials from field biologists, photographers, and conservation students
+- Call-to-action buttons for Start Scanning and Explore Map
 
 ### AI Species Recognition
 - Capture wildlife photos using device camera
@@ -82,10 +85,10 @@ Scrolling landing page introducing app features with:
 - Delete your own observations
 
 ### User Profile
-- Personal statistics (observations, species, locations visited)
-- Achievement badges with animated icons
-- Recent observation history
-- Editable profile (name, bio, avatar)
+- Personal statistics dashboard (total observations, species found, locations visited)
+- Editable profile information (username, bio, avatar photo upload)
+- Recent observation thumbnail grid with delete capability
+- Quick access to Edit Profile and Logout actions
 
 ---
 
@@ -102,14 +105,14 @@ Scrolling landing page introducing app features with:
 - React-Leaflet 5.0.0: React wrapper for Leaflet
 
 ### PWA & Storage
-- Web App Manifest: Custom `manifest.json`
-- Service Worker: Custom `service-worker.js`
-- LocalStorage API: Compatibility fallback + UI preference persistence
-- Dexie 4.x + IndexedDB: Primary structured local persistence layer
+- Web App Manifest: Custom `manifest.json` with app icons and standalone display mode
+- Service Worker: Custom `service-worker.js` for offline asset caching
+- LocalStorage API: Theme preference and saved observation IDs persistence
+- Dexie 4.x + IndexedDB: Primary structured local database for observations and photo blobs
 - dexie-react-hooks 4.x: Live query hook support for React components
 
 ### UI & Animation
-- Lucide React 0.468.0: Icon library (100+ icons)
+- Lucide React 0.577.0: Icon library (100+ icons)
 - Framer Motion 12.35.1: Animation library
 - reactjs-popup 2.x: Modal popup for observation photo viewing (IndexedDB verification)
 - react-webcam 7.x: Camera stream and screenshot capture in scanner
@@ -151,7 +154,7 @@ green-guardian/
 │   │   ├── SpeciesScanner.jsx     # Camera + AI recognition
 │   │   ├── CommunityFeed.jsx      # Observation grid feed
 │   │   ├── MapViewModern.jsx      # Leaflet map integration
-│   │   ├── UserProfile.jsx        # User stats & achievements
+│   │   ├── UserProfile.jsx        # User stats & recent observations
 │   │   ├── SpeciesDetailModal.jsx # Observation detail view
 │   │   ├── CommentSection.jsx     # Nested comment system
 │   │   ├── BottomSheetModal.jsx   # Map marker details

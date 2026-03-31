@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import Popup from "reactjs-popup";
 import "reactjs-popup/dist/index.css";
 import { X, MapPin, Info, Share2, BookmarkPlus, Camera, Pencil, Check, Image } from "lucide-react";
-import { GetPhotoSrc } from "../db";
+import usePhotoSrc from "../hooks/usePhotoSrc";
 import "../styles/SpeciesDetailModal.css";
 
 function ViewPhoto(props) {
-  const photoSrc = GetPhotoSrc(props.id);
+  const photoSrc = usePhotoSrc(props.id);
 
   return (
     <>
@@ -22,31 +22,28 @@ function ViewPhoto(props) {
 }
 
 export default function SpeciesDetailModal({ observation, onClose, onEditObservation, latitude, longitude, onViewSimilar, currentUserId, onTogglePublic, children }) {
-  const [isSaved, setIsSaved] = useState(false);
+  const savedObservationIds = readSavedObservationIds();
+  const isSaved = observation?.id
+    ? savedObservationIds.includes(observation.id)
+    : false;
   const [saveNotice, setSaveNotice] = useState("");
 
-  const photoFromDb = GetPhotoSrc(observation?.id);
+  const photoFromDb = usePhotoSrc(observation?.id);
   const savedObservationKey = "green_guardian_saved_observation_ids";
+
+  const observedAtText = observation?.createdAt
+  ? new Date(observation.createdAt).toLocaleString()
+  : "Unknown date";
 
   function readSavedObservationIds() {
     try {
       const savedRaw = localStorage.getItem(savedObservationKey);
       const savedIds = savedRaw ? JSON.parse(savedRaw) : [];
       return Array.isArray(savedIds) ? savedIds : [];
-    } catch (e) {
+    } catch {
       return [];
     }
   }
-
-  useEffect(() => {
-    if (!observation?.id) {
-      setIsSaved(false);
-      return;
-    }
-
-    const savedIds = readSavedObservationIds();
-    setIsSaved(savedIds.includes(observation.id));
-  }, [observation?.id]);
 
   useEffect(() => {
     if (!saveNotice) return;
@@ -62,7 +59,7 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
           text: `I observed ${observation.species} on Green Guardian!`,
           url: window.location.href,
         });
-      } catch (err) {
+      } catch {
         // Ignore cancelled share actions.
       }
     }
@@ -77,9 +74,8 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
         : currentIds.filter((id) => id !== observation.id);
 
       localStorage.setItem(savedObservationKey, JSON.stringify(nextIds));
-      setIsSaved(nextSaved);
       setSaveNotice(nextSaved ? "Saved to bookmarks" : "Removed from bookmarks");
-    } catch (e) {
+    } catch {
       setSaveNotice("Unable to update bookmarks");
     }
   }
@@ -255,7 +251,7 @@ export default function SpeciesDetailModal({ observation, onClose, onEditObserva
           <div className="info-section">
             <p className="timestamp">
               <Camera size={16} />
-              Observed on {new Date(observation.createdAt || Date.now()).toLocaleString()}
+              Observed on {observedAtText}
             </p>
           </div>
 

@@ -5,50 +5,12 @@ import "../styles/ARCameraView.css";
 
 export default function ARCameraView({ targetLocation, targetName, onClose }) {
   const videoRef = useRef(null);
-  const [stream, setStream] = useState(null);
+  const [, setStream] = useState(null);
   const [deviceOrientation, setDeviceOrientation] = useState(0);
   const [cameraError, setCameraError] = useState(null);
   const { location, error: gpsError, startTracking, stopTracking } = useGeolocation();
 
-  useEffect(() => {
-    startCameraStream();
-    startTracking();
-    startOrientationTracking();
-
-    return () => {
-      stopCameraStream();
-      stopTracking();
-      stopOrientationTracking();
-    };
-  }, []);
-
-  const startCameraStream = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-      setCameraError(null);
-    } catch (err) {
-      setCameraError("Unable to access camera. Please grant camera permissions.");
-    }
-  };
-
-  const stopCameraStream = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-  };
-
-  const handleOrientation = (event) => {
+  function handleOrientation(event) {
     if (event.alpha !== null) {
       setDeviceOrientation(event.alpha);
     } else if (event.webkitCompassHeading !== undefined) {
@@ -56,19 +18,46 @@ export default function ARCameraView({ targetLocation, targetName, onClose }) {
     }
   };
 
-  const startOrientationTracking = () => {
+  async function retryCameraAccess() {
+  try {
+    const mediaStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
+    });
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = mediaStream;
+    }
+
+    setStream((previousStream) => {
+      if (previousStream) {
+        previousStream.getTracks().forEach((track) => track.stop());
+      }
+      return mediaStream;
+    });
+
+    setCameraError(null);
+  } catch {
+    setCameraError("Unable to access camera. Please grant camera permissions.");
+  }
+}
+
+  function startOrientationTracking() {
     if (window.DeviceOrientationEvent) {
       window.addEventListener("deviceorientation", handleOrientation);
       window.addEventListener("deviceorientationabsolute", handleOrientation);
     }
-  };
+  }
 
-  const stopOrientationTracking = () => {
+  function stopOrientationTracking() {
     window.removeEventListener("deviceorientation", handleOrientation);
     window.removeEventListener("deviceorientationabsolute", handleOrientation);
-  };
+  }
 
-  const getNavigationData = () => {
+  function getNavigationData() {
     if (!location || !targetLocation) {
       return null;
     }
@@ -98,12 +87,61 @@ export default function ARCameraView({ targetLocation, targetName, onClose }) {
 
   const navData = getNavigationData();
 
-  const formatDistance = (meters) => {
+  function formatDistance(meters) {
     if (meters < 1000) {
       return `${Math.round(meters)}m`;
     }
     return `${(meters / 1000).toFixed(2)}km`;
-  };
+  }
+
+  useEffect(() => {
+    let isMounted = true;
+    let mediaStream = null;
+
+    const initCamera = async () => {
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "environment",
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        });
+
+        if (!isMounted) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        setStream(mediaStream);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
+
+        setCameraError(null);
+      } catch {
+        if (isMounted) {
+          setCameraError("Unable to access camera. Please grant camera permissions.");
+        }
+      }
+    };
+
+    initCamera();
+    startTracking();
+    startOrientationTracking();
+
+    return () => {
+      isMounted = false;
+
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+      }
+
+      stopTracking();
+      stopOrientationTracking();
+    };
+  }, []);
 
   return (
     <div className="ar-camera-view">
@@ -116,7 +154,7 @@ export default function ARCameraView({ targetLocation, targetName, onClose }) {
           <div className="ar-error">
             <Camera size={64} />
             <p>{cameraError}</p>
-            <button onClick={startCameraStream} className="retry-btn">
+            <button onClick={retryCameraAccess} className="retry-btn">
               Retry Camera Access
             </button>
           </div>

@@ -111,30 +111,43 @@ function RecentObsItem({ obs, onClick }) {
 
 export default function MapViewModern({ observations = [], userLocation, onObservationClick, user }) {
   const [mapCenter] = useState([32.0603, 118.7969]);
-  const [localUserLocation, setLocalUserLocation] = useState(() => {
+  const [localUserLocation, setLocalUserLocation] = useState(null);
+  const [selectedObservation, setSelectedObservation] = useState(null);
+
+  const normalizedUserLocation = (() => {
     const lat = Number(userLocation?.lat);
     const lng = Number(userLocation?.lng);
     const accuracy = Number(userLocation?.accuracy);
-    if (Number.isFinite(lat) && Number.isFinite(lng) && Number.isFinite(accuracy) && accuracy > 0) {
+
+    if (
+      Number.isFinite(lat) &&
+      Number.isFinite(lng) &&
+      Number.isFinite(accuracy) &&
+      accuracy > 0
+    ) {
       return {
         lat,
         lng,
         accuracy,
       };
     }
+
     return null;
-  });
-  const [selectedObservation, setSelectedObservation] = useState(null);
+  }
+
+)();
+
+const effectiveUserLocation = normalizedUserLocation ?? localUserLocation;
 
   const hasPreciseUserLocation =
-    Number.isFinite(localUserLocation?.lat) &&
-    Number.isFinite(localUserLocation?.lng) &&
-    Number.isFinite(localUserLocation?.accuracy) &&
-    localUserLocation.accuracy > 0;
+    Number.isFinite(effectiveUserLocation?.lat) &&
+    Number.isFinite(effectiveUserLocation?.lng) &&
+    Number.isFinite(effectiveUserLocation?.accuracy) &&
+    effectiveUserLocation.accuracy > 0;
 
   const displayObservations = useMemo(() => {
-    const fallbackLat = hasPreciseUserLocation ? localUserLocation.lat : mapCenter[0];
-    const fallbackLng = hasPreciseUserLocation ? localUserLocation.lng : mapCenter[1];
+    const fallbackLat = hasPreciseUserLocation ? effectiveUserLocation.lat : mapCenter[0];
+    const fallbackLng = hasPreciseUserLocation ? effectiveUserLocation.lng : mapCenter[1];
     const overlapCounts = new Map();
 
     return observations.map((obs, index) => {
@@ -195,7 +208,7 @@ export default function MapViewModern({ observations = [], userLocation, onObser
         },
       };
     });
-  }, [hasPreciseUserLocation, localUserLocation, mapCenter, observations]);
+  }, [hasPreciseUserLocation, effectiveUserLocation, mapCenter, observations]);
 
   const stats = useMemo(() => ({
     total: observations.length,
@@ -207,19 +220,6 @@ export default function MapViewModern({ observations = [], userLocation, onObser
     () => [...observations].sort((a, b) => b.createdAt - a.createdAt).slice(0, 10),
     [observations]
   );
-
-  useEffect(() => {
-    const lat = Number(userLocation?.lat);
-    const lng = Number(userLocation?.lng);
-    const accuracy = Number(userLocation?.accuracy);
-    if (Number.isFinite(lat) && Number.isFinite(lng) && Number.isFinite(accuracy) && accuracy > 0) {
-      setLocalUserLocation({
-        lat,
-        lng,
-        accuracy,
-      });
-    }
-  }, [userLocation]);
 
   useEffect(() => {
     if (hasPreciseUserLocation || !navigator.geolocation) return;
@@ -305,8 +305,8 @@ export default function MapViewModern({ observations = [], userLocation, onObser
               {hasPreciseUserLocation && (
                 <>
                   <Circle
-                    center={[localUserLocation.lat, localUserLocation.lng]}
-                    radius={Math.max(20, Math.min(localUserLocation.accuracy, 250))}
+                    center={[effectiveUserLocation.lat, effectiveUserLocation.lng]}
+                    radius={Math.max(20, Math.min(effectiveUserLocation.accuracy, 250))}
                     pathOptions={{
                       color: "#4285F4",
                       fillColor: "#4285F4",
@@ -315,21 +315,21 @@ export default function MapViewModern({ observations = [], userLocation, onObser
                     }}
                   />
                   <Marker
-                    position={[localUserLocation.lat, localUserLocation.lng]}
+                    position={[effectiveUserLocation.lat, effectiveUserLocation.lng]}
                     icon={createUserLocationIcon()}
                   >
                     <Popup>
                       <strong>Your location</strong>
                       <br />
-                      <small>Accuracy: +- {Math.round(localUserLocation.accuracy)}m</small>
+                      <small>Accuracy: +- {Math.round(effectiveUserLocation.accuracy)}m</small>
                     </Popup>
                   </Marker>
                 </>
               )}
 
               <AutoFitBounds
-                observations={displayObservations}
-                userLocation={hasPreciseUserLocation ? localUserLocation : null}
+                  observations={displayObservations}
+                  userLocation={hasPreciseUserLocation ? effectiveUserLocation : null}
               />
               <LocateControl onLocationFound={setLocalUserLocation} />
             </MapContainer>

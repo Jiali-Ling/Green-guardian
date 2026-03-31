@@ -5,7 +5,7 @@ export default function usePersistedState(key, defaultValue) {
     try {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : defaultValue;
-    } catch (e) {
+    } catch {
       return defaultValue;
     }
   });
@@ -13,7 +13,9 @@ export default function usePersistedState(key, defaultValue) {
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(state));
-    } catch (e) {}
+    } catch (error) {
+      console.error(`Failed to save persisted state for key "${key}":`, error);
+    }
   }, [key, state]);
 
   return [state, setState];

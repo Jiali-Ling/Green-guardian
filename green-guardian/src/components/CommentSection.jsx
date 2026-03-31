@@ -26,7 +26,7 @@ export default function CommentSection({ observationId, comments = [], currentUs
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    onAddComment(observationId, text, replyingTo);
+    onAddComment(observationId, newComment.trim(), replyingTo);
 
     setNewComment("");
     setReplyingTo(null);

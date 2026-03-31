@@ -8,7 +8,6 @@ function WebcamCapture(props) {
   const {
     addObservation,
     onCapture,
-    geoFindMe,
     onCancel,
     id,
     photoedTask,
@@ -209,7 +208,7 @@ function WebcamCapture(props) {
       
       await persistObservation(unknownObservation);
       
-    } catch (err) {
+    } catch {
       if (typeof submitObservation !== "function") {
         setError("Unable to save observation. Please refresh and try again.");
         return;
