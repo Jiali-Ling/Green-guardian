@@ -5,16 +5,16 @@ import { sampleObservations } from "./data/sampleObservations";
 import "leaflet/dist/leaflet.css";
 import "./index.css";
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/service-worker.js")
-      .then((registration) => {
-        console.log("Service Worker registered! Scope: ", registration.scope);
-      })
-      .catch((err) => {
-        console.log("Service Worker registration failed: ", err);
-      });
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register(
+        `${import.meta.env.BASE_URL}service-worker.js`
+      );
+      console.log("Service Worker registered! Scope:", registration.scope);
+    } catch (err) {
+      console.log("Service Worker registration failed:", err);
+    }
   });
 }
 

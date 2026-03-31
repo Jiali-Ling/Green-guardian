@@ -131,7 +131,7 @@ Scrolling landing page introducing app features with:
 # Install dependencies
 npm install
 
-# Start development server (http://localhost:5173)
+# Start development server (http://localhost:5180)
 npm run dev
 
 # Build for production
