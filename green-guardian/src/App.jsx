@@ -121,6 +121,7 @@ export default function App({ initialObservations }) {
     species: "",
     description: "",
   });
+  const [isDexieReady, setIsDexieReady] = useState(false);
 
   // Shared state updaters keep observation mutations easy to scan.
   function updateObservationById(observationId, updater) {
