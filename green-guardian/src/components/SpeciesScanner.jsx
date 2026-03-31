@@ -25,6 +25,7 @@ function WebcamCapture(props) {
   const [showSavedToast, setShowSavedToast] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [webcamKey, setWebcamKey] = useState(0);
+  const [facingMode, setFacingMode] = useState("environment");
 
   console.log("WebCamCapture", props.id);
 
@@ -127,6 +128,19 @@ function WebcamCapture(props) {
     setWebcamKey((prev) => prev + 1);
   }
 
+  function toggleCameraFacing() {
+    setError(null);
+    setCameraReady(false);
+
+    const stream = webcamRef.current?.video?.srcObject;
+    if (stream && typeof stream.getTracks === "function") {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
+    setWebcamKey((prev) => prev + 1);
+  }
+
   function buildUnknownObservation(imgSrcValue) {
     return {
       photo: imgSrcValue,
@@ -224,13 +238,14 @@ function WebcamCapture(props) {
       <div className="scanner-viewport">
         {!imgSrc ? (
           <Webcam
-            key={webcamKey}
+            key={`${webcamKey}-${facingMode}`}
             audio={false}
             ref={webcamRef}
+            mirrored={facingMode === "user"}
             screenshotFormat="image/jpeg"
             screenshotQuality={0.95}
             videoConstraints={{
-              facingMode: "environment",
+              facingMode: { ideal: facingMode },
               width: { ideal: 1280 },
               height: { ideal: 720 },
             }}
@@ -297,7 +312,17 @@ function WebcamCapture(props) {
               )}
             </div>
             <div className="btn-group">
-              {/* 6. Conditional rendering: no photo yet */}
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={toggleCameraFacing}
+                disabled={!cameraReady || !!error}
+                aria-label="Switch camera"
+              >
+              <RotateCcw size={16} />
+              {facingMode === "environment" ? "Front camera" : "Rear camera"}
+              </button>
+
               <button
                 type="button"
                 className="btn"
@@ -305,9 +330,9 @@ function WebcamCapture(props) {
                 disabled={!cameraReady || !!error}
                 aria-label="Capture photo"
               >
-                Capture photo
-              </button>
-            </div>
+              Capture photo
+            </button>
+          </div>
             <div className="ai-status" style={{ opacity: 0 }}>Placeholder</div>
           </>
         ) : (

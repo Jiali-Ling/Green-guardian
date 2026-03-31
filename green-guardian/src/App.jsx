@@ -310,6 +310,7 @@ export default function App({ initialObservations }) {
       username: user.username,
       userAvatar: user.avatar,
       likes: 0,
+      likedBy: [],
       comments: [],
       isPublic: true,
       photoed: Boolean(speciesData?.photo),
@@ -358,6 +359,8 @@ export default function App({ initialObservations }) {
   function handleEditObservation(observation) {
   if (!observation?.id) return;
 
+  setSelectedObservation(null);
+  
   setEditingObservation(observation);
   setEditForm({
     species: observation.species || "",
@@ -395,14 +398,28 @@ function submitEditObservation(e) {
   if (!observationId) return;
 
   const now = Date.now();
-  const applyLike = (observation) => ({
-    ...observation,
-    likes: (observation.likes || 0) + 1,
-    updatedAt: now,
-  });
 
-  updateObservationById(observationId, applyLike);
-  updateSelectedObservationById(observationId, applyLike);
+  const toggleLike = (observation) => {
+    const likedBy = Array.isArray(observation.likedBy)
+      ? observation.likedBy
+      : [];
+
+    const hasLiked = likedBy.includes(user.id);
+
+    const nextLikedBy = hasLiked
+      ? likedBy.filter((id) => id !== user.id)
+      : [...likedBy, user.id];
+
+    return {
+      ...observation,
+      likedBy: nextLikedBy,
+      likes: nextLikedBy.length,
+      updatedAt: now,
+    };
+  };
+
+  updateObservationById(observationId, toggleLike);
+  updateSelectedObservationById(observationId, toggleLike);
 }
 
   function toggleObservationVisibility(observationId) {

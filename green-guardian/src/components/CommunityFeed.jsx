@@ -165,6 +165,7 @@ function ObservationCard({
   onLikeObservation,
   currentUserId,
 }) {
+  const likedBy = Array.isArray(observation.likedBy) ? observation.likedBy : [];
   const [hasLiked, setHasLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const likeCount = observation.likes || 0;
