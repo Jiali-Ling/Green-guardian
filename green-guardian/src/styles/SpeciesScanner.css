@@ -382,7 +382,11 @@
 
   .scanner-viewport {
     min-height: 0;
-    padding-bottom: 178px;
+    padding-bottom: calc(
+      var(--scanner-controls-height, 178px) +
+      var(--scanner-vv-offset, 0px) +
+      16px
+    );
   }
 
   .scanner-controls {

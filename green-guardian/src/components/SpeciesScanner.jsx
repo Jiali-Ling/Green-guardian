@@ -16,6 +16,7 @@ function WebcamCapture(props) {
   } = props;
   // 1. Prepare Hooks
   const webcamRef = useRef(null);
+  const controlsRef = useRef(null);
   const [imgSrc, setImgSrc] = useState(null);
   const [imgId, setImgId] = useState(null);
   const [photoSave, setPhotoSave] = useState(false);
@@ -64,6 +65,24 @@ function WebcamCapture(props) {
       document.documentElement.style.setProperty("--scanner-vv-offset", "0px");
     };
   }, []);
+
+  useEffect(() => {
+  function updateControlsHeight() {
+    const controlsHeight = controlsRef.current?.offsetHeight || 0;
+    document.documentElement.style.setProperty(
+      "--scanner-controls-height",
+      `${controlsHeight}px`
+    );
+  }
+
+  updateControlsHeight();
+  window.addEventListener("resize", updateControlsHeight);
+
+  return () => {
+    window.removeEventListener("resize", updateControlsHeight);
+    document.documentElement.style.setProperty("--scanner-controls-height", "0px");
+  };
+}, [imgSrc, isAnalyzing, isReady, isLoading, error, modelError]);
 
   useEffect(() => {
     if (!showSavedToast) return;
@@ -265,7 +284,7 @@ function WebcamCapture(props) {
         )}
       </div>
 
-      <div className="scanner-controls">
+      <div className="scanner-controls" ref={controlsRef}>
         {!imgSrc ? (
           <>
             <div className="ai-status">
