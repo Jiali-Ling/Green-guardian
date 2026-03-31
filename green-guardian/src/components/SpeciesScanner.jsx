@@ -126,10 +126,6 @@ function WebcamCapture(props) {
     setImgId(createdId);
     setPhotoSave(true);
     setShowSavedToast(true);
-
-    if (createdId && typeof geoFindMe === "function") {
-      geoFindMe(createdId);
-    }
   }
 
   // 3. Capture callback

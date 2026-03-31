@@ -54,7 +54,14 @@ function truncateDescription(text, maxLength = 80) {
   return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
 
-export default function CommunityFeed({ observations, onSelectObservation, currentUserId, onDeleteObservation, onTogglePublic }) {
+export default function CommunityFeed({
+  observations,
+  onSelectObservation,
+  currentUserId,
+  onDeleteObservation,
+  onTogglePublic,
+  onLikeObservation,
+}) {
   const [scopeFilter, setScopeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -138,6 +145,7 @@ export default function CommunityFeed({ observations, onSelectObservation, curre
               onClick={() => onSelectObservation(obs)}
               onDelete={obs.userId === currentUserId ? () => onDeleteObservation(obs.id) : null}
               onTogglePublic={onTogglePublic}
+              onLikeObservation={onLikeObservation}
               currentUserId={currentUserId}
             />
           ))
@@ -147,8 +155,17 @@ export default function CommunityFeed({ observations, onSelectObservation, curre
   );
 }
 
-function ObservationCard({ observation, latitude, longitude, onClick, onDelete, onTogglePublic, currentUserId }) {
-  const [liked, setLiked] = useState(false);
+function ObservationCard({
+  observation,
+  latitude,
+  longitude,
+  onClick,
+  onDelete,
+  onTogglePublic,
+  onLikeObservation,
+  currentUserId,
+}) {
+  const [hasLiked, setHasLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
   const likeCount = observation.likes || 0;
   const commentCount = observation.comments?.length || 0;
@@ -157,7 +174,13 @@ function ObservationCard({ observation, latitude, longitude, onClick, onDelete, 
 
   function handleLike(e) {
     e.stopPropagation();
-    setLiked(!liked);
+    if (hasLiked) return;
+
+    if (typeof onLikeObservation === "function") {
+      onLikeObservation(observation.id);
+    }
+
+    setHasLiked(true);
   }
 
   function handleDelete(e) {
@@ -235,11 +258,11 @@ function ObservationCard({ observation, latitude, longitude, onClick, onDelete, 
         <div className="card-footer">
           <div className="card-interactions">
             <button
-              className={`interaction-btn ${liked ? "liked" : ""}`}
+              className={`interaction-btn ${hasLiked ? "liked" : ""}`}
               onClick={handleLike}
             >
-              <Heart size={16} fill={liked ? "currentColor" : "none"} />
-              <span>{liked ? likeCount + 1 : likeCount}</span>
+              <Heart size={16} fill={hasLiked ? "currentColor" : "none"} />
+              <span>{likeCount}</span>
             </button>
             <button className="interaction-btn">
               <MessageCircle size={16} />

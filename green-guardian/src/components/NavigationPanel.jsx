@@ -4,7 +4,7 @@ import ARCameraView from "./ARCameraView";
 import "../styles/NavigationPanel.css";
 
 export default function NavigationPanel({ observation, latitude, longitude, onClose }) {
-  const [mode, setMode] = useState("ar");
+  const [mode, setMode] = useState("map");
 
   if (!observation || latitude == null || longitude == null) {
     return null;

@@ -22,23 +22,11 @@ export default function CommentSection({ observationId, comments = [], currentUs
     }, {});
   }, [comments]);
 
-  function createCommentPayload() {
-    return {
-      id: Date.now().toString(),
-      observationId,
-      userId: currentUserId,
-      text: newComment,
-      createdAt: Date.now(),
-      likes: 0,
-      parentId: replyingTo,
-    };
-  }
-
   function handleSubmit(e) {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    onAddComment(createCommentPayload());
+    onAddComment(observationId, text, replyingTo);
 
     setNewComment("");
     setReplyingTo(null);
@@ -84,12 +72,13 @@ export default function CommentSection({ observationId, comments = [], currentUs
           rootComments.map((comment) => (
             <CommentItem
               key={comment.id}
+              observationId={observationId}
               comment={comment}
               currentUserId={currentUserId}
-              onReply={() => setReplyingTo(comment.id)}
-              onDelete={() => onDeleteComment(comment.id)}
-              onLike={() => onLikeComment(comment.id)}
-              replies={repliesByParentId[comment.id] || []}
+              setReplyingTo={setReplyingTo}
+              onDeleteComment={onDeleteComment}
+              onLikeComment={onLikeComment}
+              repliesByParentId={repliesByParentId}
             />
           ))
         )}
@@ -98,15 +87,28 @@ export default function CommentSection({ observationId, comments = [], currentUs
   );
 }
 
-function CommentItem({ comment, currentUserId, onReply, onDelete, onLike, replies }) {
-  const [liked, setLiked] = useState(false);
+function CommentItem({
+  observationId,
+  comment,
+  currentUserId,
+  setReplyingTo,
+  onDeleteComment,
+  onLikeComment,
+  repliesByParentId,
+}) {
+  const [hasLiked, setHasLiked] = useState(false);
   const isOwner = comment.userId === currentUserId;
-  const commentLikeCount = (comment.likes || 0) + (liked ? 1 : 0);
-  const displayName = `User ${comment.userId?.slice(0, 6)}`;
+  const replies = repliesByParentId[comment.id] || [];
+  const displayName = comment.username || `User ${comment.userId?.slice(0, 6) || "anon"}`;
 
   function handleLike() {
-    setLiked(!liked);
-    onLike();
+    if (hasLiked) return;
+    onLikeComment(observationId, comment.id);
+    setHasLiked(true);
+  }
+
+  function handleDelete() {
+    onDeleteComment(observationId, comment.id);
   }
 
   return (
@@ -114,7 +116,7 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onLike, replie
       <div className="comment-avatar">
         <User size={20} />
       </div>
-      
+
       <div className="comment-content">
         <div className="comment-header-row">
           <span className="comment-user">{displayName}</span>
@@ -122,35 +124,50 @@ function CommentItem({ comment, currentUserId, onReply, onDelete, onLike, replie
             {new Date(comment.createdAt).toLocaleDateString()}
           </span>
         </div>
-        
+
         <p className="comment-text">{comment.text}</p>
-        
+
         <div className="comment-actions">
-          <button className={`action-btn ${liked ? "liked" : ""}`} onClick={handleLike}>
-            <Heart size={14} fill={liked ? "currentColor" : "none"} />
-            <span>{commentLikeCount}</span>
+          <button
+            type="button"
+            className={`action-btn ${hasLiked ? "liked" : ""}`}
+            onClick={handleLike}
+          >
+            <Heart size={14} fill={hasLiked ? "currentColor" : "none"} />
+            <span>{comment.likes || 0}</span>
           </button>
-          <button className="action-btn" onClick={onReply}>
+
+          <button
+            type="button"
+            className="action-btn"
+            onClick={() => setReplyingTo(comment.id)}
+          >
             Reply
           </button>
+
           {isOwner && (
-            <button className="action-btn delete-btn" onClick={onDelete}>
+            <button
+              type="button"
+              className="action-btn delete-btn"
+              onClick={handleDelete}
+            >
               <Trash2 size={14} />
             </button>
           )}
         </div>
 
-        {replies && replies.length > 0 && (
+        {replies.length > 0 && (
           <div className="replies">
             {replies.map((reply) => (
               <CommentItem
                 key={reply.id}
+                observationId={observationId}
                 comment={reply}
                 currentUserId={currentUserId}
-                onReply={onReply}
-                onDelete={onDelete}
-                onLike={onLike}
-                replies={[]}
+                setReplyingTo={setReplyingTo}
+                onDeleteComment={onDeleteComment}
+                onLikeComment={onLikeComment}
+                repliesByParentId={repliesByParentId}
               />
             ))}
           </div>

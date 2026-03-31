@@ -112,11 +112,15 @@ export default function App({ initialObservations }) {
       id: nanoid(),
     })
   );
-  const [isDexieReady, setIsDexieReady] = useState(false);
   const [selectedObservation, setSelectedObservation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [navigationTarget, setNavigationTarget] = useState(null);
   const [lastInsertedId, setLastInsertedId] = useState(null);
+  const [editingObservation, setEditingObservation] = useState(null);
+  const [editForm, setEditForm] = useState({
+    species: "",
+    description: "",
+  });
 
   // Shared state updaters keep observation mutations easy to scan.
   function updateObservationById(observationId, updater) {
@@ -351,34 +355,68 @@ export default function App({ initialObservations }) {
   }
 
   function handleEditObservation(observation) {
-    const newSpecies = prompt("Edit species name:", observation.species || "");
-    if (newSpecies === null) return;
+  if (!observation?.id) return;
 
-    const newDescription = prompt(
-      "Edit description:",
-      observation.description || observation.notes || ""
-    );
-    if (newDescription === null) return;
+  setEditingObservation(observation);
+  setEditForm({
+    species: observation.species || "",
+    description: observation.description || observation.notes || "",
+  });
+}
 
-    editObservation(observation.id, {
-      species: newSpecies.trim(),
-      description: newDescription.trim(),
-    });
-  }
+function closeEditObservationModal() {
+  setEditingObservation(null);
+  setEditForm({
+    species: "",
+    description: "",
+  });
+}
+
+function submitEditObservation(e) {
+  e.preventDefault();
+
+  if (!editingObservation?.id) return;
+
+  const species = editForm.species.trim();
+  const description = editForm.description.trim();
+
+  if (!species) return;
+
+  editObservation(editingObservation.id, {
+    species,
+    description,
+  });
+
+  closeEditObservationModal();
+}
 
   function likeObservation(observationId) {
-    updateObservationById(observationId, (observation) => ({
-      ...observation,
-      likes: observation.likes + 1,
-    }));
-  }
+  if (!observationId) return;
+
+  const now = Date.now();
+  const applyLike = (observation) => ({
+    ...observation,
+    likes: (observation.likes || 0) + 1,
+    updatedAt: now,
+  });
+
+  updateObservationById(observationId, applyLike);
+  updateSelectedObservationById(observationId, applyLike);
+}
 
   function toggleObservationVisibility(observationId) {
-    updateObservationById(observationId, (observation) => ({
-      ...observation,
-      isPublic: !observation.isPublic,
-    }));
-  }
+  if (!observationId) return;
+
+  const now = Date.now();
+  const toggleVisibility = (observation) => ({
+    ...observation,
+    isPublic: observation.isPublic === false,
+    updatedAt: now,
+  });
+
+  updateObservationById(observationId, toggleVisibility);
+  updateSelectedObservationById(observationId, toggleVisibility);
+}
 
   function photoedTask(id) {
     if (!id) {
@@ -409,78 +447,92 @@ export default function App({ initialObservations }) {
   }
 
   function deleteObservation(observationId) {
-    setObservations((prev) => prev.filter((obs) => obs.id !== observationId));
-    if (selectedObservation?.id === observationId) {
-      setSelectedObservation(null);
+  setObservations((prev) => prev.filter((obs) => obs.id !== observationId));
+  if (selectedObservation?.id === observationId) {
+    setSelectedObservation(null);
+  }
+}
+
+function removeCommentBranch(comments = [], rootCommentId) {
+  const idsToDelete = new Set([rootCommentId]);
+  let addedNewChild = true;
+
+  while (addedNewChild) {
+    addedNewChild = false;
+
+    for (const comment of comments) {
+      if (
+        comment.parentId &&
+        idsToDelete.has(comment.parentId) &&
+        !idsToDelete.has(comment.id)
+      ) {
+        idsToDelete.add(comment.id);
+        addedNewChild = true;
+      }
     }
   }
 
-  // Observation comments CRUD
-  function addObservationComment(observationId, commentText, parentId = null) {
-    setObservations((prev) =>
-      prev.map((observation) => {
-        if (observation.id === observationId) {
-          const newComment = {
-            id: nanoid(),
-            userId: user.id,
-            username: user.username,
-            userAvatar: user.avatar,
-            text: commentText,
-            parentId,
-            likes: 0,
-            createdAt: Date.now(),
-          };
-          return {
-            ...observation,
-            comments: [...(observation.comments || []), newComment],
-          };
-        }
-        return observation;
-      })
-    );
-  }
+  return comments.filter((comment) => !idsToDelete.has(comment.id));
+}
 
-  function likeObservationComment(observationId, commentId) {
-    setObservations((prev) =>
-      prev.map((observation) => {
-        if (observation.id === observationId) {
-          return {
-            ...observation,
-            comments: observation.comments.map((comment) =>
-              comment.id === commentId
-                ? { ...comment, likes: comment.likes + 1 }
-                : comment
-            ),
-          };
-        }
-        return observation;
-      })
-    );
-  }
+// Observation comments CRUD
+function addObservationComment(observationId, commentText, parentId = null) {
+  const text = commentText?.trim();
+  if (!observationId || !text) return;
 
-  function deleteObservationComment(observationId, commentId) {
-    setObservations((prev) =>
-      prev.map((observation) => {
-        if (observation.id === observationId) {
-          const filterComments = (comments) =>
-            comments
-              .filter((comment) => comment.id !== commentId)
-              .map((comment) => {
-                if (comment.replies) {
-                  return { ...comment, replies: filterComments(comment.replies) };
-                }
-                return comment;
-              });
+  const now = Date.now();
+  const newComment = {
+    id: nanoid(),
+    userId: user.id,
+    username: user.username,
+    userAvatar: user.avatar,
+    text,
+    parentId,
+    likes: 0,
+    createdAt: now,
+  };
 
-          return {
-            ...observation,
-            comments: filterComments(observation.comments || []),
-          };
-        }
-        return observation;
-      })
-    );
-  }
+  const appendComment = (observation) => ({
+    ...observation,
+    comments: [...(observation.comments || []), newComment],
+    updatedAt: now,
+  });
+
+  updateObservationById(observationId, appendComment);
+  updateSelectedObservationById(observationId, appendComment);
+}
+
+function likeObservationComment(observationId, commentId) {
+  if (!observationId || !commentId) return;
+
+  const now = Date.now();
+  const bumpCommentLike = (observation) => ({
+    ...observation,
+    comments: (observation.comments || []).map((comment) =>
+      comment.id === commentId
+        ? { ...comment, likes: (comment.likes || 0) + 1 }
+        : comment
+    ),
+    updatedAt: now,
+  });
+
+  updateObservationById(observationId, bumpCommentLike);
+  updateSelectedObservationById(observationId, bumpCommentLike);
+}
+
+function deleteObservationComment(observationId, commentId) {
+  if (!observationId || !commentId) return;
+
+  const now = Date.now();
+  const removeComment = (observation) => ({
+    ...observation,
+    comments: removeCommentBranch(observation.comments || [], commentId),
+    updatedAt: now,
+  });
+
+  updateObservationById(observationId, removeComment);
+  updateSelectedObservationById(observationId, removeComment);
+}
 
   // User profile actions
   function editUserProfile() {
@@ -530,6 +582,7 @@ export default function App({ initialObservations }) {
             onSelectObservation={selectObservation}
             onDeleteObservation={deleteObservation}
             onTogglePublic={toggleObservationVisibility}
+            onLikeObservation={likeObservation}
           />
         )}
 
@@ -627,6 +680,81 @@ export default function App({ initialObservations }) {
           />
         </SpeciesDetailModal>
       ) : null}
+
+            {editingObservation && (
+        <div
+          className="edit-observation-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-observation-title"
+        >
+          <div className="edit-observation-modal">
+            <div className="edit-observation-header">
+              <h2 id="edit-observation-title">Edit observation</h2>
+              <button
+                type="button"
+                className="edit-observation-close"
+                onClick={closeEditObservationModal}
+                aria-label="Close edit form"
+              >
+                Close
+              </button>
+            </div>
+
+            <form
+              className="edit-observation-form"
+              onSubmit={submitEditObservation}
+            >
+              <label className="edit-observation-field">
+                <span>Species name</span>
+                <input
+                  type="text"
+                  value={editForm.species}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      species: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter species name"
+                  required
+                />
+              </label>
+
+              <label className="edit-observation-field">
+                <span>Description</span>
+                <textarea
+                  rows={4}
+                  value={editForm.description}
+                  onChange={(e) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  placeholder="Update your observation notes"
+                />
+              </label>
+
+              <div className="edit-observation-actions">
+                <button
+                  type="button"
+                  className="edit-observation-cancel"
+                  onClick={closeEditObservationModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="edit-observation-save"
+                >
+                  Save changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {navigationTarget && (
         <NavigationPanel

@@ -1543,3 +1543,159 @@ textarea:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =================== EDIT OBSERVATION MODAL =================== */
+.edit-observation-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(13, 26, 13, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.edit-observation-modal {
+  width: min(560px, 100%);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-large);
+  padding: 20px;
+}
+
+.edit-observation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.edit-observation-header h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.edit-observation-close {
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.edit-observation-close:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.edit-observation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-observation-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-observation-field span {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+
+.edit-observation-field input,
+.edit-observation-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.edit-observation-field input:focus,
+.edit-observation-field textarea:focus {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 3px var(--ring-color);
+  outline: none;
+}
+
+.edit-observation-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.edit-observation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.edit-observation-cancel,
+.edit-observation-save {
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
+}
+
+.edit-observation-cancel {
+  background: var(--bg-soft);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.edit-observation-save {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.edit-observation-cancel:hover,
+.edit-observation-save:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.edit-observation-cancel:active,
+.edit-observation-save:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 640px) {
+  .edit-observation-overlay {
+    padding: 14px;
+    align-items: flex-end;
+  }
+
+  .edit-observation-modal {
+    width: 100%;
+    border-radius: 24px 24px 16px 16px;
+    padding: 18px;
+  }
+
+  .edit-observation-actions {
+    flex-direction: column-reverse;
+  }
+
+  .edit-observation-cancel,
+  .edit-observation-save,
+  .edit-observation-close {
+    width: 100%;
+  }
+}
