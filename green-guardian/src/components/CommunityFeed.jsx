@@ -165,24 +165,19 @@ function ObservationCard({
   onLikeObservation,
   currentUserId,
 }) {
-  const likedBy = Array.isArray(observation.likedBy) ? observation.likedBy : [];
-  const [hasLiked, setHasLiked] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const likeCount = observation.likes || 0;
+  const likedBy = Array.isArray(observation.likedBy) ? observation.likedBy : [];
+  const hasLiked = likedBy.includes(currentUserId);
+  const likeCount = likedBy.length || observation.likes || 0;
   const commentCount = observation.comments?.length || 0;
   const isOwner = observation.userId === currentUserId;
   const description = truncateDescription(observation.description);
 
   function handleLike(e) {
     e.stopPropagation();
-    if (hasLiked) return;
-
-    if (typeof onLikeObservation === "function") {
+    if (typeof onLikeObservation !== "function") return;
       onLikeObservation(observation.id);
     }
-
-    setHasLiked(true);
-  }
 
   function handleDelete(e) {
     e.stopPropagation();
