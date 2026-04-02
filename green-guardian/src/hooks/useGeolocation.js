@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 
 function hasGeolocationSupport() {
   return "geolocation" in navigator;
@@ -19,6 +19,7 @@ export default function useGeolocation(options = {}) {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState(null);
   const [isTracking, setIsTracking] = useState(false);
+  const watchIdRef = useRef(null);
 
   const geolocationOptions = useMemo(
     () => ({
@@ -36,6 +37,11 @@ export default function useGeolocation(options = {}) {
       return;
     }
 
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
     setIsTracking(true);
 
     const watchId = navigator.geolocation.watchPosition(
@@ -50,14 +56,25 @@ export default function useGeolocation(options = {}) {
       geolocationOptions
     );
 
-    return () => {
-      navigator.geolocation.clearWatch(watchId);
-      setIsTracking(false);
-    };
+    watchIdRef.current = watchId;
+    return watchId;
   }, [geolocationOptions]);
 
   const stopTracking = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
     setIsTracking(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
   }, []);
 
   const getCurrentPosition = useCallback(() => {

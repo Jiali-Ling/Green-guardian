@@ -146,17 +146,16 @@ const effectiveUserLocation = normalizedUserLocation ?? localUserLocation;
     effectiveUserLocation.accuracy > 0;
 
   const displayObservations = useMemo(() => {
-    const fallbackLat = hasPreciseUserLocation ? effectiveUserLocation.lat : mapCenter[0];
-    const fallbackLng = hasPreciseUserLocation ? effectiveUserLocation.lng : mapCenter[1];
     const overlapCounts = new Map();
 
-    return observations.map((obs, index) => {
+    return observations.reduce((items, obs, index) => {
       const rawLat = Number(
         obs?.location?.lat ??
           obs?.location?.latitude ??
           obs?.lat ??
           obs?.latitude
       );
+
       const rawLng = Number(
         obs?.location?.lng ??
           obs?.location?.lon ??
@@ -165,40 +164,28 @@ const effectiveUserLocation = normalizedUserLocation ?? localUserLocation;
           obs?.lon ??
           obs?.longitude
       );
+
       const hasValidLocation = Number.isFinite(rawLat) && Number.isFinite(rawLng);
 
-      let baseLat = rawLat;
-      let baseLng = rawLng;
-
       if (!hasValidLocation) {
-        const idSeed = `${obs.id || ""}-${obs.species || ""}-${index}`;
-        let hash = 0;
-        for (let i = 0; i < idSeed.length; i++) {
-          hash = idSeed.charCodeAt(i) + ((hash << 5) - hash);
-        }
-
-        const angle = (Math.abs(hash) % 360) * (Math.PI / 180);
-        const radius = 0.01 + (Math.abs(hash >> 8) % 100) * 0.0002;
-        baseLat = fallbackLat + Math.cos(angle) * radius;
-        baseLng = fallbackLng + Math.sin(angle) * radius;
+        return items;
       }
 
-      const overlapKey = `${baseLat.toFixed(5)},${baseLng.toFixed(5)}`;
+      const overlapKey = `${rawLat.toFixed(5)},${rawLng.toFixed(5)}`;
       const overlapIndex = overlapCounts.get(overlapKey) || 0;
       overlapCounts.set(overlapKey, overlapIndex + 1);
 
-      let finalLat = baseLat;
-      let finalLng = baseLng;
+      let finalLat = rawLat;
+      let finalLng = rawLng;
 
       if (overlapIndex > 0) {
-        // Spread overlapping markers in a tiny spiral so each one is clickable.
         const spiralAngle = overlapIndex * 2.399963229728653;
         const spiralRadius = 0.0012 * Math.ceil(overlapIndex / 6);
-        finalLat = baseLat + Math.cos(spiralAngle) * spiralRadius;
-        finalLng = baseLng + Math.sin(spiralAngle) * spiralRadius;
+        finalLat = rawLat + Math.cos(spiralAngle) * spiralRadius;
+        finalLng = rawLng + Math.sin(spiralAngle) * spiralRadius;
       }
 
-      return {
+      items.push({
         ...obs,
         markerKey: `${obs.id || "obs"}-${index}`,
         location: {
@@ -206,9 +193,11 @@ const effectiveUserLocation = normalizedUserLocation ?? localUserLocation;
           lng: finalLng,
           accuracy: obs?.location?.accuracy ?? 0,
         },
-      };
-    });
-  }, [hasPreciseUserLocation, effectiveUserLocation, mapCenter, observations]);
+      });
+
+      return items;
+    }, []);
+  }, [observations]);
 
   const stats = useMemo(() => ({
     total: observations.length,

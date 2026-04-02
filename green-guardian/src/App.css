@@ -1735,3 +1735,131 @@ textarea:focus-visible {
     width: 100%;
   }
 }
+
+/* =================== EDIT PROFILE MODAL =================== */
+.edit-profile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(13, 26, 13, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.edit-profile-modal {
+  width: min(560px, 100%);
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-large);
+  padding: 20px;
+}
+
+.edit-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.edit-profile-header h2 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.edit-profile-close {
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.edit-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-profile-field span {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.edit-profile-field input,
+.edit-profile-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.edit-profile-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.edit-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.edit-profile-cancel,
+.edit-profile-save {
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 10px 18px;
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.edit-profile-cancel {
+  background: var(--bg-soft);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.edit-profile-save {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+@media (max-width: 640px) {
+  .edit-profile-overlay {
+    padding: 14px;
+    align-items: flex-end;
+  }
+
+  .edit-profile-modal {
+    width: 100%;
+    border-radius: 24px 24px 16px 16px;
+    padding: 18px;
+  }
+
+  .edit-profile-actions {
+    flex-direction: column-reverse;
+  }
+
+  .edit-profile-cancel,
+  .edit-profile-save,
+  .edit-profile-close {
+    width: 100%;
+  }
+}

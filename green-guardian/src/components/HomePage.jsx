@@ -11,56 +11,56 @@ export default function HomePage({ onNavigate }) {
       icon: Camera,
       tag: "AI-Powered",
       title: "Instant Species Recognition",
-      description: "Point your camera at any animal or plant. Our deep-learning model identifies the species in under 2 seconds with 98% accuracy.",
+      description: "Point your camera at wildlife and get an on-device classification result with a confidence score. Results can be reviewed before saving the observation.",
       gradient: "linear-gradient(135deg, #7fb800, #5a9e00)"
     },
     {
       icon: MapPin,
       tag: "Real-time",
       title: "Interactive Wildlife Map",
-      description: "Explore sightings on a live global map with AR navigation. Filter by species, date, and distance from your location.",
+      description: "Explore saved sightings on an interactive map, open observation details, and use the navigation panel when location data is available.",
       gradient: "linear-gradient(135deg, #667eea, #4a5bbf)"
     },
     {
       icon: Users,
       tag: "Community",
       title: "Global Citizen Scientists",
-      description: "Connect with 50,000+ wildlife enthusiasts across 120+ countries. Share discoveries, discuss observations, and learn together.",
+      description: "Browse shared observations, view recent activity, and interact with the local community feed through likes and comments.",
       gradient: "linear-gradient(135deg, #e07a5f, #c45a3f)"
     },
     {
       icon: Shield,
       tag: "Conservation",
       title: "Research & Protection",
-      description: "Every observation feeds into conservation databases, helping researchers track endangered species and protect critical habitats.",
+      description: "The app encourages wildlife recording and supports personal tracking of observations collected during field use.",
       gradient: "linear-gradient(135deg, #81b29a, #5a8e78)"
     }
   ];
 
   const stats = [
-    { value: "10K+", label: "Species Identified", icon: Leaf },
-    { value: "50K+", label: "Active Users", icon: Users },
-    { value: "200K+", label: "Observations", icon: Globe },
-    { value: "98%", label: "AI Accuracy", icon: Sparkles }
+    { value: "Camera", label: "Capture", icon: Leaf },
+    { value: "Map", label: "Locate", icon: Users },
+    { value: "Feed", label: "Review", icon: Globe },
+    { value: "PWA", label: "Offline Ready", icon: Sparkles }
   ];
 
   const steps = [
     {
       number: "01",
       title: "Scan Wildlife",
-      description: "Open the camera and point it at any animal or plant you encounter — works in real-time, no internet needed for basic recognition.",
+      description: "Open the scanner, capture a wildlife photo, and review the predicted species before saving the observation.",
       icon: Camera
     },
     {
       number: "02",
       title: "AI Identifies Instantly",
-      description: "Our on-device AI model returns the species name, conservation status, habitat info, and behavioral facts within seconds.",
+      description: "The model returns a predicted label and confidence score. Users can keep the result or edit the saved observation later.",
       icon: Zap
     },
     {
       number: "03",
       title: "Share & Protect",
-      description: "Pin your observation on the global map, earn conservation badges, and contribute to biodiversity research worldwide.",
+      description: "Save the observation to local storage, attach location data when available, and review it later in the feed, profile, or map view.",
       icon: Heart
     }
   ];
@@ -69,19 +69,19 @@ export default function HomePage({ onNavigate }) {
     {
       name: "Sarah M.",
       role: "Field Biologist",
-      text: "Green Guardian changed how I document fieldwork. The AI accuracy rivals professional identification tools.",
+      text: "The camera and map workflow makes it easy to record a sighting and review it later.",
       stars: 5
     },
     {
       name: "James K.",
       role: "Nature Photographer",
-      text: "I've identified over 300 species in my backyard alone. The community maps are incredible for finding new sightings.",
+      text: "I can capture an image, save the observation, and quickly find it again in the feed and profile screens.",
       stars: 5
     },
     {
       name: "Priya R.",
       role: "Conservation Student",
-      text: "The conservation data this app generates is genuinely used by researchers. My observations matter.",
+      text: "The app is useful for practising field recording with camera, geolocation, and local persistence in one place.",
       stars: 5
     }
   ];
@@ -114,8 +114,7 @@ export default function HomePage({ onNavigate }) {
           </h1>
 
           <p className="hero-description">
-            Join 50,000+ nature enthusiasts using AI-powered species recognition
-            to identify, track, and protect wildlife across 120+ countries.
+            Record wildlife observations with camera capture, local storage, map views, and a mobile-friendly PWA interface.
           </p>
 
           <div className="hero-actions">
@@ -145,7 +144,7 @@ export default function HomePage({ onNavigate }) {
             </div>
             <div className="hero-trust-item">
               <Globe size={15} aria-hidden="true" />
-              <span>120+ countries</span>
+              <span>Map support</span>
             </div>
             <div className="hero-trust-item">
               <Shield size={15} aria-hidden="true" />

@@ -104,6 +104,11 @@ export default function App({ initialObservations }) {
     species: "",
     description: "",
   });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    username: "",
+    bio: "",
+  });
   const [isDexieReady, setIsDexieReady] = useState(false);
   const [locationNotice, setLocationNotice] = useState({
     type: "",
@@ -566,12 +571,36 @@ function deleteObservationComment(observationId, commentId) {
 
   // User profile actions
   function editUserProfile() {
-    const newUsername = prompt("Enter your username:", user.username);
-    const newBio = prompt("Enter your bio:", user.bio);
+    setProfileForm({
+      username: user.username || "",
+      bio: user.bio || "",
+    });
+    setIsEditingProfile(true);
+  }
 
-    if (newUsername !== null && newUsername.trim() !== "") {
-      setUser({ ...user, username: newUsername.trim(), bio: newBio?.trim() || user.bio });
-    }
+  function closeEditProfileModal() {
+    setIsEditingProfile(false);
+    setProfileForm({
+      username: "",
+      bio: "",
+    });
+  }
+
+  function submitEditProfile(e) {
+    e.preventDefault();
+
+    const username = profileForm.username.trim();
+    const bio = profileForm.bio.trim();
+
+    if (!username) return;
+
+    setUser((prev) => ({
+      ...prev,
+      username,
+      bio: bio || prev.bio,
+    }));
+
+    closeEditProfileModal();
   }
 
   function updateUserAvatar(avatarDataUrl) {
@@ -587,7 +616,9 @@ function deleteObservationComment(observationId, commentId) {
         bio: "Exploring and documenting wildlife around the world",
         avatar: null,
       });
-      setObservations([]);
+      setSelectedObservation(null);
+      setEditingObservation(null);
+      setNavigationTarget(null);
       setCurrentView("feed");
     }
   }
@@ -720,59 +751,59 @@ function deleteObservationComment(observationId, commentId) {
       ) : null}
 
             {editingObservation && (
-        <div
-          className="edit-observation-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-observation-title"
-        >
-          <div className="edit-observation-modal">
-            <div className="edit-observation-header">
-              <h2 id="edit-observation-title">Edit observation</h2>
-              <button
-                type="button"
-                className="edit-observation-close"
-                onClick={closeEditObservationModal}
-                aria-label="Close edit form"
+              <div
+                className="edit-observation-overlay"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="edit-observation-title"
               >
-                Close
-              </button>
-            </div>
+                <div className="edit-observation-modal">
+                <div className="edit-observation-header">
+                  <h2 id="edit-observation-title">Edit observation</h2>
+                    <button
+                      type="button"
+                      className="edit-observation-close"
+                      onClick={closeEditObservationModal}
+                      aria-label="Close edit form"
+                    >
+                      Close
+                    </button>
+                </div>
 
-            <form
-              className="edit-observation-form"
-              onSubmit={submitEditObservation}
-            >
-              <label className="edit-observation-field">
-                <span>Species name</span>
-                <input
-                  type="text"
-                  value={editForm.species}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({
-                      ...prev,
-                      species: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter species name"
-                  required
-                />
-              </label>
+                <form
+                  className="edit-observation-form"
+                  onSubmit={submitEditObservation}
+                >
+                <label className="edit-observation-field">
+                  <span>Species name</span>
+                    <input
+                      type="text"
+                      value={editForm.species}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          species: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter species name"
+                      required
+                    />
+                </label>
 
-              <label className="edit-observation-field">
-                <span>Description</span>
-                <textarea
-                  rows={4}
-                  value={editForm.description}
-                  onChange={(e) =>
-                    setEditForm((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Update your observation notes"
-                />
-              </label>
+                <label className="edit-observation-field">
+                  <span>Description</span>
+                    <textarea
+                      rows={4}
+                      value={editForm.description}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      placeholder="Update your observation notes"
+                    />
+                </label>
 
               <div className="edit-observation-actions">
                 <button
@@ -787,6 +818,75 @@ function deleteObservationComment(observationId, commentId) {
                   className="edit-observation-save"
                 >
                   Save changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isEditingProfile && (
+        <div
+          className="edit-profile-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-profile-title"
+        >
+          <div className="edit-profile-modal">
+            <div className="edit-profile-header">
+              <h2 id="edit-profile-title">Edit profile</h2>
+              <button
+                type="button"
+                className="edit-profile-close"
+                onClick={closeEditProfileModal}
+                aria-label="Close profile form"
+              >
+                Close
+              </button>
+              </div>
+
+              <form className="edit-profile-form" onSubmit={submitEditProfile}>
+                <label className="edit-profile-field">
+                <span>Username</span>
+                <input
+                  type="text"
+                  value={profileForm.username}
+                  onChange={(e) =>
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      username: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter username"
+                  required
+                />
+              </label>
+
+              <label className="edit-profile-field">
+                <span>Bio</span>
+                <textarea
+                  rows={4}
+                  value={profileForm.bio}
+                  onChange={(e) =>
+                    setProfileForm((prev) => ({
+                      ...prev,
+                      bio: e.target.value,
+                    }))
+                  }
+                  placeholder="Tell other users about your wildlife interests"
+                />
+              </label>
+
+              <div className="edit-profile-actions">
+                <button
+                  type="button"
+                  className="edit-profile-cancel"
+                  onClick={closeEditProfileModal}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="edit-profile-save">
+                  Save profile
                 </button>
               </div>
             </form>

@@ -36,7 +36,7 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 ### User Experience
 - Responsive Design: Mobile-first with breakpoints for tablet/desktop
 - Dark Theme: Modern deep green (#3d5a3d) background with high contrast
-- Accessibility: WCAG AA compliant color contrast ratios
+- Accessibility: improved contrast and large touch targets were considered, but formal WCAG conformance testing is not claimed
 - Touch Optimized: Large tap targets and gesture support
 - Loading States: Skeleton screens and progress indicators
 - Dark Mode Toggle: User-selectable theme preference with automatic persistence
@@ -54,7 +54,7 @@ Install as App: Supports "Add to Home Screen" on mobile devices
 ### Home Page
 Scrolling landing page introducing app features with:
 - Animated hero section with floating wildlife image cards
-- Global statistics showcase (10K+ species, 50K+ users, 200K+ observations, 98% AI accuracy)
+- Landing page feature cards describing the main workflow without unsupported public usage claims
 - Wildlife gallery with real community observations
 - Feature grid highlighting AI Recognition, Interactive Map, Community, and Conservation
 - Step-by-step "How It Works" usage guide (Scan → AI Identifies → Share & Protect)
@@ -305,7 +305,7 @@ The app has 5 main tabs in the bottom navigation:
 ### Typography
 - UI Font: System font stack (optimized per OS)
 - Weights: 400 (regular), 500 (medium), 600 (semibold), 700 (bold), 800 (extrabold)
-- Contrast: WCAG AA compliant (white on #3d5a3d = 8.67:1)
+- Contrast example checked for key foreground and background combinations during interface refinement
 
 ### Animations
 - Timing: cubic-bezier(0.4, 0, 0.2, 1) universally
