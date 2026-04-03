@@ -37,16 +37,12 @@ export default function useSpeciesRecognition() {
       setIsLoading(true);
       setError(null);
 
-      const loadedModel = await loadModelWithBackend("webgl");
+      const loadedModel = await loadModelWithBackend("cpu");
       setModel(loadedModel);
-    } catch {
-      try {
-        const loadedModel = await loadModelWithBackend("cpu");
-        setModel(loadedModel);
-        setError(null);
-      } catch {
-        setError(MODEL_UNAVAILABLE_MESSAGE);
-      }
+      console.log("MobileNet loaded with CPU backend");
+    } catch (err) {
+      console.error("Failed to load MobileNet with CPU backend:", err);
+      setError(MODEL_UNAVAILABLE_MESSAGE);
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +56,8 @@ export default function useSpeciesRecognition() {
     try {
       const predictions = await model.classify(imageElement);
       return mapPredictions(predictions);
-    } catch {
+    } catch(err) {
+      console.error("Image classification failed:", err);
       throw new Error("Failed to classify image");
     }
   };
